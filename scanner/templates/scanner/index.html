@@ -1,0 +1,72 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NETGUARD // SOC</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'scanner/style.css' %}">
+</head>
+<body>
+    <div class="dashboard-grid">
+        <header class="header-zone glass-panel">
+            <h1>NETGUARD</h1>
+            <div style="display: flex; gap: 16px; align-items: center;">
+                <p style="font-size: 0.85rem; color: #64748b;">Elite Network Security Reconnaissance • Nmap + Groq AI + Fernet Encryption</p>
+            </div>
+            <div class="kpi-container">
+                <div class="kpi-card"><span>Devices</span><h2 id="kpi-devices">0</h2></div>
+                <div class="kpi-card"><span>Critical</span><h2 id="kpi-critical" class="text-red">0</h2></div>
+                <div class="kpi-card"><span>Safe Ports</span><h2 id="kpi-safe" class="text-green">0</h2></div>
+                <div class="kpi-card"><span>Status</span><h2 id="kpi-status">STANDBY</h2></div>
+            </div>
+        </header>
+
+        <section class="radar-zone glass-panel">
+            <h2>🔍 Network Radar</h2>
+            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 12px;">Nmap-powered device discovery with 100% sweep coverage</p>
+            <button id="radar-btn" class="primary-btn">INITIATE NETWORK SCAN</button>
+            <div id="device-list" class="device-container">
+                <p class="placeholder-text">Awaiting network discovery...</p>
+            </div>
+        </section>
+
+        <section class="patcher-zone glass-panel">
+            <h2>⚙️ Zero-Trust Auto-Patcher</h2>
+            <p class="subtitle">Dynamic OS-specific remediation stream...</p>
+            <div class="code-terminal">
+                <pre><code id="master-patch-script"># Awaiting threat detection...
+# Auto-patcher will populate with OS-specific firewall rules
+# for all detected critical vulnerabilities
+</code></pre>
+            </div>
+        </section>
+
+        <section class="os-zone glass-panel">
+            <h2>🖥️ Host Fingerprint</h2>
+            <ul id="host-info-list" style="line-height: 1.8;">
+                <li>Loading system data...</li>
+            </ul>
+            <div id="host-vulnerabilities" style="margin-top: 12px;"></div>
+        </section>
+
+        <section class="chat-zone glass-panel">
+            <h2>🤖 AI Copilot (Groq Llama 3)</h2>
+            <div id="chat-messages" class="chat-history"></div>
+            
+            <div class="quick-actions">
+                <button class="quick-action-btn" onclick="setQuickPrompt('What is Port 3389?')">What is Port 3389?</button>
+                <button class="quick-action-btn" onclick="setQuickPrompt('How do I secure SMB?')">How do I secure SMB?</button>
+                <button class="quick-action-btn" onclick="setQuickPrompt('Explain Brute Force Attacks')">Explain Brute Force Attacks</button>
+            </div>
+            
+            <div style="display: flex; gap: 6px;">
+                <input type="text" id="chat-input" placeholder="Ask about threats, mitigation..." style="flex:1; padding: 8px; border-radius: 8px; border: 1px solid #ccc;">
+                <button id="chat-send" style="padding: 8px 16px; background: #6366f1; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">↑</button>
+            </div>
+        </section>
+    </div>
+    <script src="{% static 'scanner/main.js' %}"></script>
+</body>
+</html>
