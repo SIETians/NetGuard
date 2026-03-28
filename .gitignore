@@ -1,0 +1,42 @@
+# Virtual Environment
+netguard_env/
+venv/
+env/
+*.pyc
+__pycache__/
+*.egg-info/
+
+# Database
+db.sqlite3
+
+# Environment Variables (NEVER commit this!)
+.env
+.env.local
+.env.*.local
+
+# IDE & Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Django
+*.log
+/staticfiles/
+/media/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Sensitive files
+*.pem
+*.key
+*.crt

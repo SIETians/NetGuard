@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NetGuard — Login</title>
+  <style>
+    /* ── Dark-mode palette matching NetGuard's existing style.css ── */
+    :root {
+      --bg-primary:   #0d1117;
+      --bg-secondary: #161b22;
+      --bg-card:      #21262d;
+      --border:       #30363d;
+      --accent:       #58a6ff;
+      --accent-hover: #79c0ff;
+      --danger:       #f85149;
+      --text-primary: #c9d1d9;
+      --text-muted:   #8b949e;
+      --success:      #3fb950;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: 'Segoe UI', 'SF Pro Display', system-ui, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* subtle grid backdrop */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(88,166,255,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(88,166,255,.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+
+    .card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2.5rem 2rem;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 8px 32px rgba(0,0,0,.5);
+      position: relative;
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .logo-icon {
+      font-size: 2.5rem;
+      display: block;
+      margin-bottom: .5rem;
+    }
+    .logo h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: var(--accent);
+    }
+    .logo p {
+      font-size: .8rem;
+      color: var(--text-muted);
+      margin-top: .25rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    label {
+      display: block;
+      font-size: .8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-bottom: .4rem;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: .65rem .9rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-size: .95rem;
+      outline: none;
+      transition: border-color .2s;
+      margin-bottom: 1.2rem;
+    }
+    input:focus { border-color: var(--accent); }
+
+    button[type="submit"] {
+      width: 100%;
+      padding: .75rem;
+      background: var(--accent);
+      color: #0d1117;
+      font-weight: 700;
+      font-size: 1rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      letter-spacing: 1px;
+      transition: background .2s, transform .1s;
+    }
+    button[type="submit"]:hover  { background: var(--accent-hover); }
+    button[type="submit"]:active { transform: scale(.98); }
+
+    .error-box {
+      background: rgba(248,81,73,.12);
+      border: 1px solid rgba(248,81,73,.4);
+      border-radius: 6px;
+      padding: .7rem 1rem;
+      margin-bottom: 1.2rem;
+      font-size: .85rem;
+      color: var(--danger);
+    }
+
+    .footer-note {
+      text-align: center;
+      margin-top: 1.5rem;
+      font-size: .75rem;
+      color: var(--text-muted);
+    }
+    .footer-note a { color: var(--accent); text-decoration: none; }
+    .footer-note a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">
+      <span class="logo-icon">🛡️</span>
+      <h1>NETGUARD</h1>
+      <p>Network Security Scanner</p>
+    </div>
+
+    {% if form.errors %}
+      <div class="error-box">
+        ⚠️ Invalid credentials. Please try again.
+      </div>
+    {% endif %}
+
+    {% if next %}
+      <div class="error-box">
+        🔒 Please log in to access the scanner.
+      </div>
+    {% endif %}
+
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}" />
+
+      <label for="id_username">Username</label>
+      <input type="text" id="id_username" name="username"
+             autofocus autocomplete="username" placeholder="admin" />
+
+      <label for="id_password">Password</label>
+      <input type="password" id="id_password" name="password"
+             autocomplete="current-password" placeholder="••••••••" />
+
+      <button type="submit">AUTHENTICATE →</button>
+    </form>
+
+    <p class="footer-note">
+      No account?
+      <a href="{% url 'admin' %}">Create one in the Django admin</a>.
+    </p>
+  </div>
+</body>
+</html>
