@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
 from django.contrib.auth.views import LoginView, LogoutView
+from scanner import views as scanner_views
 from collections import defaultdict
 import time
 
@@ -53,16 +54,18 @@ class RateLimitedLoginView(LoginView):
         self._prune(ip)
         _FAILED_ATTEMPTS[ip].append(time.time())
         attempts_left = max(0, _MAX_ATTEMPTS - len(_FAILED_ATTEMPTS[ip]))
-        # Attach remaining count so the template can display it
         form._attempts_left = attempts_left
         if attempts_left == 0:
             return self._locked_out_response(_LOCKOUT_SECONDS // 60)
         return super().form_invalid(form)
 
+    def get_success_url(self):
+        if self.request.user.is_superuser:
+            return '/admin/'
+        return super().get_success_url()
+
 
 urlpatterns = [
     path('admin/',  admin.site.urls),
-    path('login/',  RateLimitedLoginView.as_view(), name='login'),
-    path('logout/', LogoutView.as_view(),           name='logout'),
     path('',        include('scanner.urls')),
 ]

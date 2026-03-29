@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NetGuard — Sign In</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/scanner/style.css">
+</head>
+<body class="auth-page">
+  <div class="auth-shell">
+    <section class="auth-hero">
+      <div class="auth-brand-card">
+        <div class="auth-brand-mark">
+          <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="4" y="4" width="36" height="36" rx="12" fill="#EEF2FF"/>
+            <path d="M22 10L31 14.5V22.8C31 28.1 27.4 32.7 22 34C16.6 32.7 13 28.1 13 22.8V14.5L22 10Z" fill="#6366F1"/>
+            <path d="M18.6 22.4L21 24.8L26 19.8" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="auth-brand-copy">
+          <div class="auth-kicker">NetGuard Security Cloud</div>
+          <h1>Secure access to your network intelligence workspace.</h1>
+          <p>Monitor devices, scan exposures, review threat logs, and launch guided remediation from one enterprise-grade control plane.</p>
+        </div>
+        <div class="auth-feature-list">
+          <div class="auth-feature-pill">Live Host Fingerprint</div>
+          <div class="auth-feature-pill">Threat Intelligence Logs</div>
+          <div class="auth-feature-pill">AI Security Copilot</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="auth-panel-wrap">
+      <div class="auth-panel">
+        <div class="auth-panel-header">
+          <div class="panel-eyebrow">Welcome back</div>
+          <h2 class="auth-title">Sign in to NetGuard</h2>
+          <p class="auth-subtitle">Use your account to continue to the security dashboard.</p>
+        </div>
+
+        {% if error %}
+        <div class="auth-alert auth-alert-error">{{ error }}</div>
+        {% endif %}
+
+        <form method="post" class="auth-form">
+          {% csrf_token %}
+          <div class="auth-field">
+            <label for="username">Username</label>
+            <input id="username" type="text" name="username" placeholder="Enter your username" required autofocus>
+          </div>
+
+          <div class="auth-field">
+            <label for="password">Password</label>
+            <input id="password" type="password" name="password" placeholder="Enter your password" required>
+          </div>
+
+          <button type="submit" class="btn btn-primary auth-submit">Sign In</button>
+        </form>
+
+        <div class="auth-footer">
+          <span>New to NetGuard?</span>
+          <a href="{% url 'register' %}" class="auth-link-pill">Create account</a>
+        </div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

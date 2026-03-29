@@ -18,8 +18,8 @@ except ImportError:
 
 # ─── Security ─────────────────────────────────────────────────────────────────
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'CHANGE-ME-in-production')
-DEBUG = os.getenv('DEBUG', 'True') == 'True'
-ALLOWED_HOSTS = ['*']
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 CSRF_COOKIE_SECURE = False
 CSRF_COOKIE_HTTPONLY = False

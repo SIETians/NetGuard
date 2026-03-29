@@ -3,20 +3,58 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NetGuard — Login</title>
+  <title>NetGuard — Authentication</title>
   <style>
     /* ── Dark-mode palette matching NetGuard's existing style.css ── */
     :root {
-      --bg-primary:   #0d1117;
-      --bg-secondary: #161b22;
-      --bg-card:      #21262d;
-      --border:       #30363d;
-      --accent:       #58a6ff;
-      --accent-hover: #79c0ff;
-      --danger:       #f85149;
-      --text-primary: #c9d1d9;
-      --text-muted:   #8b949e;
-      --success:      #3fb950;
+      --bg-primary:   #0a0a0a;
+      --bg-secondary: #1a1a1a;
+      --bg-card:      #2a2a2a;
+      --bg-accent:    #3a3a3a;
+      --border:       #404040;
+      --border-light: #505050;
+      --accent:       #00d4ff;
+      --accent-hover: #00a8cc;
+      --danger:       #ff4757;
+      --success:      #2ed573;
+      --text-primary: #ffffff;
+      --text-secondary: #cccccc;
+      --text-muted:   #888888;
+      --shadow:       0 8px 32px rgba(0,0,0,0.5);
+      --glow:         0 0 20px rgba(0,212,255,0.3);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%);
+      color: var(--text-primary);
+      font-family: 'Inter', 'SF Pro Display', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow-x: hidden;
+    }
+
+    /* Animated background grid */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        radial-gradient(circle at 25% 25%, rgba(0,212,255,0.1) 0%, transparent 50%),
+        radial-gradient(circle at 75% 75%, rgba(0,212,255,0.05) 0%, transparent 50%),
+        linear-gradient(rgba(0,212,255,.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,212,255,.02) 1px, transparent 1px);
+      background-size: 100px 100px, 150px 150px, 50px 50px, 50px 50px;
+      animation: gridMove 20s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes gridMove {
+      0% { transform: translate(0, 0); }
+      100% { transform: translate(50px, 50px); }
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -43,97 +81,192 @@
     }
 
     .card {
-      background: var(--bg-secondary);
+      background: var(--bg-card);
       border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 2.5rem 2rem;
+      border-radius: 16px;
+      padding: 3rem 2.5rem;
       width: 100%;
-      max-width: 400px;
-      box-shadow: 0 8px 32px rgba(0,0,0,.5);
+      max-width: 420px;
+      box-shadow: var(--shadow);
       position: relative;
+      backdrop-filter: blur(20px);
+      transition: all 0.3s ease;
+    }
+
+    .card:hover {
+      border-color: var(--accent);
+      box-shadow: var(--shadow), var(--glow);
+      transform: translateY(-2px);
     }
 
     .logo {
       text-align: center;
-      margin-bottom: 2rem;
+      margin-bottom: 2.5rem;
     }
     .logo-icon {
-      font-size: 2.5rem;
+      font-size: 3rem;
       display: block;
-      margin-bottom: .5rem;
+      margin-bottom: .75rem;
+      filter: drop-shadow(0 0 10px var(--accent));
+      animation: pulse 3s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
     }
     .logo h1 {
-      font-size: 1.6rem;
+      font-size: 2rem;
       font-weight: 700;
-      letter-spacing: 2px;
+      letter-spacing: -0.5px;
       color: var(--accent);
+      margin-bottom: 0.25rem;
+      text-shadow: 0 0 20px rgba(0,212,255,0.5);
     }
     .logo p {
-      font-size: .8rem;
-      color: var(--text-muted);
-      margin-top: .25rem;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
       letter-spacing: 1px;
       text-transform: uppercase;
+      font-weight: 500;
     }
 
     label {
       display: block;
-      font-size: .8rem;
-      color: var(--text-muted);
+      font-size: 0.9rem;
+      color: var(--text-secondary);
       text-transform: uppercase;
-      letter-spacing: .5px;
-      margin-bottom: .4rem;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
     }
 
     input[type="text"],
     input[type="password"] {
       width: 100%;
-      padding: .65rem .9rem;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 6px;
+      padding: 0.875rem 1rem;
+      background: var(--bg-accent);
+      border: 2px solid var(--border);
+      border-radius: 8px;
       color: var(--text-primary);
-      font-size: .95rem;
+      font-size: 1rem;
       outline: none;
-      transition: border-color .2s;
-      margin-bottom: 1.2rem;
+      transition: all 0.3s ease;
+      margin-bottom: 1.5rem;
+      font-family: inherit;
     }
-    input:focus { border-color: var(--accent); }
+
+    input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0,212,255,0.1);
+      background: var(--bg-card);
+    }
+
+    input::placeholder {
+      color: var(--text-muted);
+      opacity: 0.7;
+    }
 
     button[type="submit"] {
       width: 100%;
-      padding: .75rem;
-      background: var(--accent);
-      color: #0d1117;
+      padding: 1rem;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
+      color: #0a0a0a;
       font-weight: 700;
-      font-size: 1rem;
+      font-size: 1.1rem;
       border: none;
-      border-radius: 6px;
+      border-radius: 8px;
       cursor: pointer;
-      letter-spacing: 1px;
-      transition: background .2s, transform .1s;
+      letter-spacing: 0.5px;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      text-transform: uppercase;
     }
-    button[type="submit"]:hover  { background: var(--accent-hover); }
-    button[type="submit"]:active { transform: scale(.98); }
+
+    button[type="submit"]::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s;
+    }
+
+    button[type="submit"]:hover::before {
+      left: 100%;
+    }
+
+    button[type="submit"]:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0,212,255,0.3);
+    }
+
+    button[type="submit"]:active {
+      transform: translateY(0);
+    }
 
     .error-box {
-      background: rgba(248,81,73,.12);
-      border: 1px solid rgba(248,81,73,.4);
-      border-radius: 6px;
-      padding: .7rem 1rem;
-      margin-bottom: 1.2rem;
-      font-size: .85rem;
+      background: linear-gradient(135deg, rgba(255,71,87,0.1) 0%, rgba(255,71,87,0.05) 100%);
+      border: 1px solid rgba(255,71,87,0.3);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.5rem;
+      font-size: 0.9rem;
       color: var(--danger);
+      backdrop-filter: blur(10px);
     }
 
     .footer-note {
       text-align: center;
-      margin-top: 1.5rem;
-      font-size: .75rem;
+      margin-top: 2rem;
+      font-size: 0.85rem;
       color: var(--text-muted);
     }
-    .footer-note a { color: var(--accent); text-decoration: none; }
-    .footer-note a:hover { text-decoration: underline; }
+    .footer-note a {
+      color: var(--accent);
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+    .footer-note a:hover {
+      color: var(--accent-hover);
+      text-decoration: underline;
+    }
+
+    .tabs {
+      display: flex;
+      margin-bottom: 2rem;
+      background: var(--bg-accent);
+      border-radius: 8px;
+      padding: 4px;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 0.75rem;
+      text-align: center;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.3s ease;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .tab.active {
+      background: var(--accent);
+      color: #0a0a0a;
+      box-shadow: 0 4px 12px rgba(0,212,255,0.3);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
   </style>
 </head>
 <body>
@@ -141,40 +274,78 @@
     <div class="logo">
       <span class="logo-icon">🛡️</span>
       <h1>NETGUARD</h1>
-      <p>Network Security Scanner</p>
+      <p>Network Intelligence Platform</p>
     </div>
 
-    {% if form.errors %}
-      <div class="error-box">
-        ⚠️ Invalid credentials. Please try again.
-      </div>
-    {% endif %}
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('login')">Login</div>
+      <div class="tab" onclick="switchTab('signup')">Sign Up</div>
+    </div>
 
-    {% if next %}
-      <div class="error-box">
-        🔒 Please log in to access the scanner.
-      </div>
-    {% endif %}
+    <div id="login-tab" class="tab-content active">
+      {% if form.errors %}
+        <div class="error-box">
+          ⚠️ Invalid credentials. Please try again.
+        </div>
+      {% endif %}
 
-    <form method="post">
-      {% csrf_token %}
-      <input type="hidden" name="next" value="{{ next }}" />
+      {% if next %}
+        <div class="error-box">
+          🔒 Please log in to access the scanner.
+        </div>
+      {% endif %}
 
-      <label for="id_username">Username</label>
-      <input type="text" id="id_username" name="username"
-             autofocus autocomplete="username" placeholder="admin" />
+      <form method="post" action="{% url 'login' %}">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}" />
 
-      <label for="id_password">Password</label>
-      <input type="password" id="id_password" name="password"
-             autocomplete="current-password" placeholder="••••••••" />
+        <label for="id_username">Username</label>
+        <input type="text" id="id_username" name="username"
+               autofocus autocomplete="username" placeholder="admin or username" />
 
-      <button type="submit">AUTHENTICATE →</button>
-    </form>
+        <label for="id_password">Password</label>
+        <input type="password" id="id_password" name="password"
+               autocomplete="current-password" placeholder="••••••••" />
 
-    <p class="footer-note">
-      No account?
-      <a href="{% url 'admin' %}">Create one in the Django admin</a>.
-    </p>
+        <button type="submit">AUTHENTICATE →</button>
+      </form>
+    </div>
+
+    <div id="signup-tab" class="tab-content">
+      <form method="post" action="{% url 'signup' %}">
+        {% csrf_token %}
+        <label for="{{ signup_form.username.id_for_label }}">Username</label>
+        {{ signup_form.username }}
+        {{ signup_form.username.errors }}
+
+        <label for="{{ signup_form.password1.id_for_label }}">Password</label>
+        {{ signup_form.password1 }}
+        {{ signup_form.password1.errors }}
+
+        <label for="{{ signup_form.password2.id_for_label }}">Confirm Password</label>
+        {{ signup_form.password2 }}
+        {{ signup_form.password2.errors }}
+
+        <button type="submit">CREATE ACCOUNT →</button>
+      </form>
+    </div>
   </div>
+
+  <script>
+    function switchTab(tab) {
+      // Hide all tab contents
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+      });
+      // Remove active from all tabs
+      document.querySelectorAll('.tab').forEach(t => {
+        t.classList.remove('active');
+      });
+      // Show selected tab
+      document.getElementById(tab + '-tab').classList.add('active');
+      // Add active to clicked tab
+      event.target.classList.add('active');
+    }
+  </script>
 </body>
 </html>

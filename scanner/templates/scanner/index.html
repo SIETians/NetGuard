@@ -1,1773 +1,904 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NETGUARD — Network Intelligence Platform</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg-deep:       #050810;
-    --bg-panel:      #080d1a;
-    --bg-card:       #0b1221;
-    --bg-card-hover: #0e1628;
-    --border:        rgba(0,220,255,0.12);
-    --border-bright: rgba(0,220,255,0.35);
-    --cyan:          #00dcff;
-    --cyan-dim:      rgba(0,220,255,0.6);
-    --cyan-glow:     rgba(0,220,255,0.15);
-    --red:           #ff2d55;
-    --red-dim:       rgba(255,45,85,0.7);
-    --red-glow:      rgba(255,45,85,0.15);
-    --amber:         #ffb340;
-    --amber-glow:    rgba(255,179,64,0.15);
-    --green:         #30d158;
-    --green-glow:    rgba(48,209,88,0.15);
-    --purple:        #bf5af2;
-    --text-primary:  #e8f4ff;
-    --text-secondary:#7a9ab5;
-    --text-dim:      #3a5570;
-    --font-display:  'Orbitron', monospace;
-    --font-ui:       'Rajdhani', sans-serif;
-    --font-mono:     'Share Tech Mono', monospace;
-    --radius:        6px;
-    --transition:    all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  html { scroll-behavior: smooth; }
-
-  body {
-    background: var(--bg-deep);
-    color: var(--text-primary);
-    font-family: var(--font-ui);
-    min-height: 100vh;
-    overflow-x: hidden;
-    position: relative;
-  }
-
-  /* ── Grid background ── */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(0,220,255,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0,220,255,0.03) 1px, transparent 1px);
-    background-size: 48px 48px;
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  /* ── Ambient glow orbs ── */
-  body::after {
-    content: '';
-    position: fixed;
-    top: -200px; left: -200px;
-    width: 600px; height: 600px;
-    background: radial-gradient(circle, rgba(0,220,255,0.05) 0%, transparent 70%);
-    pointer-events: none;
-    z-index: 0;
-    animation: orb-drift 20s ease-in-out infinite alternate;
-  }
-
-  @keyframes orb-drift {
-    from { transform: translate(0,0); }
-    to   { transform: translate(300px, 200px); }
-  }
-
-  /* ─────────────────────────── LAYOUT ─────────────────────────── */
-  #app {
-    position: relative;
-    z-index: 1;
-    max-width: 1440px;
-    margin: 0 auto;
-    padding: 0 24px 48px;
-  }
-
-  /* ─────────────────────────── HEADER ─────────────────────────── */
-  header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 28px 0 24px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 28px;
-    position: relative;
-  }
-
-  .logo-block {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-  }
-
-  .logo-icon {
-    width: 44px; height: 44px;
-    position: relative;
-  }
-
-  .logo-icon svg { width: 100%; height: 100%; }
-
-  .logo-text {
-    font-family: var(--font-display);
-    font-size: 1.6rem;
-    font-weight: 900;
-    letter-spacing: 0.15em;
-    color: var(--cyan);
-    text-shadow: 0 0 24px rgba(0,220,255,0.5);
-    position: relative;
-  }
-
-  .logo-text::after {
-    content: 'v2.0.1';
-    position: absolute;
-    right: -44px; top: 50%;
-    transform: translateY(-50%);
-    font-size: 0.55rem;
-    letter-spacing: 0.08em;
-    color: var(--text-dim);
-    font-family: var(--font-mono);
-    border: 1px solid var(--text-dim);
-    padding: 1px 5px;
-    border-radius: 2px;
-  }
-
-  .logo-sub {
-    font-family: var(--font-mono);
-    font-size: 0.65rem;
-    color: var(--text-dim);
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    margin-top: 2px;
-  }
-
-  /* ── Stats bar ── */
-  .stats-bar {
-    display: flex;
-    gap: 4px;
-    align-items: stretch;
-  }
-
-  .stat-chip {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 10px 20px;
-    text-align: center;
-    min-width: 90px;
-    position: relative;
-    overflow: hidden;
-    transition: var(--transition);
-  }
-
-  .stat-chip::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: var(--cyan);
-    opacity: 0;
-    transition: var(--transition);
-  }
-
-  .stat-chip.active::before { opacity: 1; }
-  .stat-chip.danger::before  { background: var(--red); opacity: 1; }
-  .stat-chip.warning::before { background: var(--amber); opacity: 1; }
-  .stat-chip.success::before { background: var(--green); opacity: 1; }
-
-  .stat-label {
-    font-family: var(--font-mono);
-    font-size: 0.6rem;
-    letter-spacing: 0.18em;
-    color: var(--text-dim);
-    text-transform: uppercase;
-    margin-bottom: 4px;
-  }
-
-  .stat-value {
-    font-family: var(--font-display);
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    line-height: 1;
-    transition: var(--transition);
-  }
-
-  .stat-chip.danger  .stat-value { color: var(--red); }
-  .stat-chip.success .stat-value { color: var(--green); }
-  .stat-chip.warning .stat-value { color: var(--amber); }
-
-  .status-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    letter-spacing: 0.15em;
-  }
-
-  .pulse-dot {
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    background: var(--green);
-    box-shadow: 0 0 0 0 rgba(48,209,88,0.4);
-    animation: pulse 2s ease infinite;
-  }
-
-  .pulse-dot.warn  { background: var(--amber); box-shadow: 0 0 0 0 rgba(255,179,64,0.4); }
-  .pulse-dot.alert { background: var(--red);   box-shadow: 0 0 0 0 rgba(255,45,85,0.4);  animation: pulse-fast 0.8s ease infinite; }
-
-  @keyframes pulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(48,209,88,0.4); }
-    50%       { box-shadow: 0 0 0 6px rgba(48,209,88,0); }
-  }
-  @keyframes pulse-fast {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(255,45,85,0.5); }
-    50%       { box-shadow: 0 0 0 8px rgba(255,45,85,0); }
-  }
-
-  /* ─────────────────────────── GRID ─────────────────────────── */
-  .main-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto auto;
-    gap: 16px;
-  }
-
-  /* ─────────────────────────── PANEL ─────────────────────────── */
-  .panel {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 24px;
-    position: relative;
-    overflow: hidden;
-    transition: var(--transition);
-  }
-
-  .panel:hover {
-    border-color: var(--border-bright);
-    background: var(--bg-card-hover);
-  }
-
-  .panel::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(0,220,255,0.02) 0%, transparent 60%);
-    pointer-events: none;
-  }
-
-  /* Corner accents */
-  .panel::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0;
-    width: 40px; height: 40px;
-    border-top: 2px solid var(--cyan);
-    border-left: 2px solid var(--cyan);
-    opacity: 0.5;
-    pointer-events: none;
-  }
-
-  .panel-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    margin-bottom: 16px;
-    gap: 12px;
-  }
-
-  .panel-title-block { flex: 1; }
-
-  .panel-title {
-    font-family: var(--font-display);
-    font-size: 0.85rem;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    color: var(--text-primary);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 4px;
-  }
-
-  .panel-title .icon {
-    font-size: 1rem;
-    filter: drop-shadow(0 0 6px var(--cyan));
-  }
-
-  .panel-sub {
-    font-family: var(--font-mono);
-    font-size: 0.62rem;
-    color: var(--text-dim);
-    letter-spacing: 0.1em;
-  }
-
-  .panel-badge {
-    font-family: var(--font-mono);
-    font-size: 0.6rem;
-    letter-spacing: 0.1em;
-    padding: 4px 10px;
-    border-radius: 3px;
-    border: 1px solid;
-    text-transform: uppercase;
-    flex-shrink: 0;
-  }
-  .badge-cyan   { color: var(--cyan);  border-color: var(--cyan);  background: var(--cyan-glow); }
-  .badge-green  { color: var(--green); border-color: var(--green); background: var(--green-glow);}
-  .badge-red    { color: var(--red);   border-color: var(--red);   background: var(--red-glow);  }
-  .badge-amber  { color: var(--amber); border-color: var(--amber); background: var(--amber-glow);}
-
-  /* ─────────────────────────── BUTTONS ─────────────────────────── */
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 12px 24px;
-    border: none;
-    border-radius: var(--radius);
-    cursor: pointer;
-    font-family: var(--font-display);
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    transition: var(--transition);
-    position: relative;
-    overflow: hidden;
-    width: 100%;
-  }
-
-  .btn::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
-    transform: translateX(-100%);
-    transition: transform 0.5s ease;
-  }
-
-  .btn:hover::before { transform: translateX(100%); }
-
-  .btn-primary {
-    background: linear-gradient(135deg, rgba(0,220,255,0.15), rgba(0,220,255,0.08));
-    color: var(--cyan);
-    border: 1px solid rgba(0,220,255,0.4);
-    box-shadow: 0 0 20px rgba(0,220,255,0.1), inset 0 1px 0 rgba(0,220,255,0.1);
-  }
-
-  .btn-primary:hover {
-    background: linear-gradient(135deg, rgba(0,220,255,0.25), rgba(0,220,255,0.15));
-    box-shadow: 0 0 30px rgba(0,220,255,0.2), inset 0 1px 0 rgba(0,220,255,0.2);
-    transform: translateY(-1px);
-  }
-
-  .btn-primary:active { transform: translateY(0); }
-
-  .btn-primary.scanning {
-    color: var(--amber);
-    border-color: rgba(255,179,64,0.4);
-    background: linear-gradient(135deg, rgba(255,179,64,0.1), rgba(255,179,64,0.05));
-    animation: scan-pulse 1.5s ease infinite;
-  }
-
-  @keyframes scan-pulse {
-    0%, 100% { box-shadow: 0 0 20px rgba(255,179,64,0.1); }
-    50%       { box-shadow: 0 0 40px rgba(255,179,64,0.25); }
-  }
-
-  .btn-danger {
-    background: linear-gradient(135deg, rgba(255,45,85,0.15), rgba(255,45,85,0.08));
-    color: var(--red);
-    border: 1px solid rgba(255,45,85,0.4);
-    box-shadow: 0 0 20px rgba(255,45,85,0.1);
-  }
-
-  .btn-danger:hover {
-    background: linear-gradient(135deg, rgba(255,45,85,0.25), rgba(255,45,85,0.15));
-    box-shadow: 0 0 30px rgba(255,45,85,0.2);
-    transform: translateY(-1px);
-  }
-
-  .btn-sm {
-    padding: 8px 16px;
-    font-size: 0.65rem;
-    width: auto;
-  }
-
-  /* ─────────────────────────── RADAR PANEL ─────────────────────────── */
-  #panel-radar { grid-column: 1; }
-
-  .scan-form {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 16px;
-  }
-
-  .scan-input-wrap {
-    flex: 1;
-    position: relative;
-  }
-
-  .scan-input-wrap::before {
-    content: 'TARGET //';
-    position: absolute;
-    left: 12px; top: 50%;
-    transform: translateY(-50%);
-    font-family: var(--font-mono);
-    font-size: 0.6rem;
-    color: var(--text-dim);
-    letter-spacing: 0.1em;
-    pointer-events: none;
-  }
-
-  .scan-input {
-    width: 100%;
-    background: rgba(0,0,0,0.4);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 12px 16px 12px 72px;
-    font-family: var(--font-mono);
-    font-size: 0.85rem;
-    color: var(--cyan);
-    outline: none;
-    transition: var(--transition);
-    letter-spacing: 0.05em;
-  }
-
-  .scan-input::placeholder { color: var(--text-dim); }
-  .scan-input:focus {
-    border-color: var(--border-bright);
-    box-shadow: 0 0 0 2px rgba(0,220,255,0.08);
-  }
-
-  /* ── Device list ── */
-  .device-list { display: flex; flex-direction: column; gap: 6px; }
-
-  .device-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 14px;
-    background: rgba(0,0,0,0.3);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    cursor: pointer;
-    transition: var(--transition);
-    position: relative;
-    overflow: hidden;
-  }
-
-  .device-row:hover {
-    border-color: var(--border-bright);
-    background: rgba(0,220,255,0.05);
-  }
-
-  .device-row.selected {
-    border-color: rgba(0,220,255,0.5);
-    background: rgba(0,220,255,0.08);
-  }
-
-  .device-row.self-host {
-    border-color: rgba(48,209,88,0.3);
-  }
-
-  .device-indicator {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--cyan);
-    box-shadow: 0 0 8px var(--cyan);
-    flex-shrink: 0;
-  }
-
-  .device-indicator.self { background: var(--green); box-shadow: 0 0 8px var(--green); }
-
-  .device-info { flex: 1; min-width: 0; }
-
-  .device-ip {
-    font-family: var(--font-mono);
-    font-size: 0.85rem;
-    color: var(--text-primary);
-    font-weight: 600;
-  }
-
-  .device-mac {
-    font-family: var(--font-mono);
-    font-size: 0.65rem;
-    color: var(--text-dim);
-    letter-spacing: 0.05em;
-    margin-top: 2px;
-  }
-
-  .device-badge {
-    font-family: var(--font-mono);
-    font-size: 0.58rem;
-    letter-spacing: 0.1em;
-    padding: 2px 8px;
-    border-radius: 2px;
-    flex-shrink: 0;
-  }
-
-  .device-badge.host   { background: rgba(48,209,88,0.15); color: var(--green); border: 1px solid rgba(48,209,88,0.3); }
-  .device-badge.remote { background: rgba(0,220,255,0.08);  color: var(--cyan-dim); border: 1px solid var(--border); }
-  .device-badge.cached { background: rgba(255,179,64,0.1);  color: var(--amber); border: 1px solid rgba(255,179,64,0.2); }
-
-  .btn-scan-device {
-    font-family: var(--font-mono);
-    font-size: 0.6rem;
-    letter-spacing: 0.08em;
-    padding: 5px 12px;
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--text-dim);
-    border-radius: 3px;
-    cursor: pointer;
-    transition: var(--transition);
-    flex-shrink: 0;
-  }
-
-  .btn-scan-device:hover {
-    border-color: var(--cyan);
-    color: var(--cyan);
-    background: var(--cyan-glow);
-  }
-
-  .empty-state {
-    text-align: center;
-    padding: 32px 20px;
-    color: var(--text-dim);
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    letter-spacing: 0.1em;
-  }
-
-  .empty-state .icon { font-size: 2rem; margin-bottom: 12px; opacity: 0.5; }
-
-  /* ─────────────────────────── PATCHER PANEL ─────────────────────────── */
-  #panel-patcher { grid-column: 2; }
-
-  .terminal {
-    background: rgba(0,0,0,0.5);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 16px;
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    color: #5a8a6a;
-    min-height: 180px;
-    max-height: 380px;
-    overflow-y: auto;
-    line-height: 1.7;
-    position: relative;
-  }
-
-  .terminal::-webkit-scrollbar { width: 4px; }
-  .terminal::-webkit-scrollbar-track { background: transparent; }
-  .terminal::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
-  .terminal .prompt  { color: var(--cyan-dim); }
-  .terminal .cmd     { color: var(--text-primary); }
-  .terminal .comment { color: #3a6a4a; }
-  .terminal .success { color: var(--green); }
-  .terminal .error   { color: var(--red); }
-  .terminal .warn    { color: var(--amber); }
-  .terminal .info    { color: var(--cyan-dim); }
-
-  .cursor {
-    display: inline-block;
-    width: 7px; height: 13px;
-    background: var(--cyan);
-    vertical-align: text-bottom;
-    animation: blink 1s step-end infinite;
-    margin-left: 2px;
-  }
-  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
-
-  /* ── Threat list ── */
-  .threat-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
-
-  .threat-row {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 12px 14px;
-    background: rgba(0,0,0,0.3);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    border-left-width: 3px;
-  }
-
-  .threat-row.critical { border-left-color: var(--red);   background: rgba(255,45,85,0.05);  }
-  .threat-row.warning  { border-left-color: var(--amber); background: rgba(255,179,64,0.05); }
-  .threat-row.info     { border-left-color: var(--cyan);  background: rgba(0,220,255,0.03);  }
-
-  .threat-port {
-    font-family: var(--font-display);
-    font-size: 1.1rem;
-    font-weight: 700;
-    line-height: 1;
-    flex-shrink: 0;
-    min-width: 48px;
-  }
-
-  .critical .threat-port { color: var(--red); }
-  .warning  .threat-port { color: var(--amber); }
-  .info     .threat-port { color: var(--cyan); }
-
-  .threat-body { flex: 1; min-width: 0; }
-
-  .threat-service {
-    font-family: var(--font-mono);
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    margin-bottom: 4px;
-  }
-
-  .critical .threat-service { color: var(--red-dim); }
-  .warning  .threat-service { color: var(--amber); }
-  .info     .threat-service { color: var(--cyan-dim); }
-
-  .threat-analysis {
-    font-family: var(--font-ui);
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    line-height: 1.5;
-  }
-
-  .threat-ai {
-    margin-top: 6px;
-    padding: 6px 10px;
-    background: rgba(191,90,242,0.08);
-    border: 1px solid rgba(191,90,242,0.2);
-    border-radius: 3px;
-    font-family: var(--font-ui);
-    font-size: 0.75rem;
-    color: var(--purple);
-    line-height: 1.5;
-  }
-
-  .threat-ai-label {
-    font-family: var(--font-mono);
-    font-size: 0.55rem;
-    letter-spacing: 0.15em;
-    color: rgba(191,90,242,0.6);
-    margin-bottom: 3px;
-  }
-
-  .threat-risk-chip {
-    font-family: var(--font-mono);
-    font-size: 0.55rem;
-    letter-spacing: 0.1em;
-    padding: 3px 8px;
-    border-radius: 2px;
-    flex-shrink: 0;
-    margin-top: 2px;
-  }
-
-  .critical .threat-risk-chip { background: var(--red-glow);   color: var(--red);   border: 1px solid rgba(255,45,85,0.3); }
-  .warning  .threat-risk-chip { background: var(--amber-glow); color: var(--amber); border: 1px solid rgba(255,179,64,0.3); }
-  .info     .threat-risk-chip { background: var(--cyan-glow);  color: var(--cyan);  border: 1px solid var(--border); }
-
-  /* ── Risk score ── */
-  .risk-bar-wrap {
-    margin: 16px 0;
-    padding: 16px;
-    background: rgba(0,0,0,0.3);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-  }
-
-  .risk-bar-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-  }
-
-  .risk-bar-label {
-    font-family: var(--font-mono);
-    font-size: 0.62rem;
-    letter-spacing: 0.15em;
-    color: var(--text-dim);
-  }
-
-  .risk-score-num {
-    font-family: var(--font-display);
-    font-size: 1.4rem;
-    font-weight: 700;
-  }
-
-  .risk-bar-track {
-    height: 6px;
-    background: rgba(255,255,255,0.06);
-    border-radius: 3px;
-    overflow: hidden;
-  }
-
-  .risk-bar-fill {
-    height: 100%;
-    border-radius: 3px;
-    transition: width 1s cubic-bezier(0.4,0,0.2,1), background 0.5s ease;
-  }
-
-  /* ─────────────────────────── FINGERPRINT PANEL ─────────────────────────── */
-  #panel-fingerprint { grid-column: 1; }
-
-  .fingerprint-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-  }
-
-  .fp-row {
-    padding: 10px 14px;
-    background: rgba(0,0,0,0.3);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-  }
-
-  .fp-row.wide { grid-column: 1 / -1; }
-
-  .fp-key {
-    font-family: var(--font-mono);
-    font-size: 0.58rem;
-    letter-spacing: 0.15em;
-    color: var(--text-dim);
-    text-transform: uppercase;
-  }
-
-  .fp-value {
-    font-family: var(--font-mono);
-    font-size: 0.85rem;
-    color: var(--text-primary);
-    word-break: break-all;
-  }
-
-  .fp-value.highlight { color: var(--cyan); }
-  .fp-value.mac       { color: var(--amber); letter-spacing: 0.08em; }
-
-  .btn-download-wrap {
-    margin-top: 14px;
-    display: flex;
-    gap: 8px;
-  }
-
-  /* ─────────────────────────── AI PANEL ─────────────────────────── */
-  #panel-ai { grid-column: 2; }
-
-  .ai-messages {
-    min-height: 160px;
-    max-height: 280px;
-    overflow-y: auto;
-    margin-bottom: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding-right: 4px;
-  }
-
-  .ai-messages::-webkit-scrollbar { width: 3px; }
-  .ai-messages::-webkit-scrollbar-thumb { background: var(--border); }
-
-  .msg {
-    padding: 10px 14px;
-    border-radius: var(--radius);
-    line-height: 1.6;
-    max-width: 92%;
-    font-size: 0.82rem;
-    animation: msg-in 0.3s ease;
-  }
-
-  @keyframes msg-in {
-    from { opacity: 0; transform: translateY(8px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  .msg.user {
-    background: rgba(0,220,255,0.08);
-    border: 1px solid rgba(0,220,255,0.2);
-    color: var(--text-primary);
-    align-self: flex-end;
-    font-family: var(--font-ui);
-  }
-
-  .msg.ai {
-    background: rgba(191,90,242,0.07);
-    border: 1px solid rgba(191,90,242,0.2);
-    color: var(--text-secondary);
-    align-self: flex-start;
-    font-family: var(--font-ui);
-    white-space: pre-line;
-  }
-
-  .msg-tag {
-    font-family: var(--font-mono);
-    font-size: 0.55rem;
-    letter-spacing: 0.12em;
-    margin-bottom: 5px;
-    opacity: 0.7;
-  }
-
-  .msg.user .msg-tag { color: var(--cyan-dim); }
-  .msg.ai   .msg-tag { color: var(--purple); }
-
-  .quick-prompts {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-bottom: 12px;
-  }
-
-  .quick-btn {
-    font-family: var(--font-mono);
-    font-size: 0.6rem;
-    letter-spacing: 0.06em;
-    padding: 6px 12px;
-    background: rgba(0,0,0,0.3);
-    border: 1px solid var(--border);
-    color: var(--text-dim);
-    border-radius: 3px;
-    cursor: pointer;
-    transition: var(--transition);
-  }
-
-  .quick-btn:hover {
-    border-color: var(--cyan);
-    color: var(--cyan);
-    background: var(--cyan-glow);
-  }
-
-  .ai-input-row {
-    display: flex;
-    gap: 8px;
-  }
-
-  .ai-input {
-    flex: 1;
-    background: rgba(0,0,0,0.4);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 10px 14px;
-    font-family: var(--font-mono);
-    font-size: 0.78rem;
-    color: var(--text-primary);
-    outline: none;
-    transition: var(--transition);
-  }
-
-  .ai-input::placeholder { color: var(--text-dim); }
-  .ai-input:focus { border-color: var(--border-bright); }
-
-  .btn-send {
-    padding: 10px 18px;
-    background: rgba(191,90,242,0.15);
-    border: 1px solid rgba(191,90,242,0.4);
-    color: var(--purple);
-    border-radius: var(--radius);
-    cursor: pointer;
-    font-family: var(--font-mono);
-    font-size: 0.8rem;
-    transition: var(--transition);
-  }
-
-  .btn-send:hover {
-    background: rgba(191,90,242,0.25);
-    box-shadow: 0 0 20px rgba(191,90,242,0.2);
-  }
-
-  /* ─────────────────────────── LOADING ─────────────────────────── */
-  .loader {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-family: var(--font-mono);
-    font-size: 0.7rem;
-    color: var(--text-dim);
-    letter-spacing: 0.1em;
-    padding: 12px 0;
-  }
-
-  .loader-bars {
-    display: flex;
-    gap: 3px;
-    align-items: flex-end;
-    height: 16px;
-  }
-
-  .loader-bar {
-    width: 3px;
-    background: var(--cyan);
-    border-radius: 1px;
-    animation: bar-bounce 1.2s ease-in-out infinite;
-  }
-
-  .loader-bar:nth-child(2) { animation-delay: 0.15s; }
-  .loader-bar:nth-child(3) { animation-delay: 0.30s; }
-  .loader-bar:nth-child(4) { animation-delay: 0.45s; }
-
-  @keyframes bar-bounce {
-    0%, 100% { height: 4px; opacity: 0.4; }
-    50%       { height: 16px; opacity: 1; }
-  }
-
-  /* ─────────────────────────── SCAN RESULT PANEL ─────────────────────────── */
-  #panel-results {
-    grid-column: 1 / -1;
-    display: none;
-  }
-
-  #panel-results.visible { display: block; }
-
-  .results-header-bar {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 16px;
-    flex-wrap: wrap;
-  }
-
-  .results-target {
-    font-family: var(--font-mono);
-    font-size: 0.72rem;
-    color: var(--text-dim);
-    letter-spacing: 0.1em;
-  }
-
-  .results-target span { color: var(--cyan); }
-
-  .os-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 12px;
-    background: rgba(191,90,242,0.08);
-    border: 1px solid rgba(191,90,242,0.2);
-    border-radius: 3px;
-    font-family: var(--font-mono);
-    font-size: 0.65rem;
-    letter-spacing: 0.08em;
-    color: var(--purple);
-  }
-
-  .secure-banner {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 20px 24px;
-    background: rgba(48,209,88,0.06);
-    border: 1px solid rgba(48,209,88,0.25);
-    border-radius: var(--radius);
-    font-family: var(--font-mono);
-    color: var(--green);
-  }
-
-  .secure-icon { font-size: 1.5rem; }
-  .secure-text-main { font-size: 0.85rem; letter-spacing: 0.12em; font-weight: 700; }
-  .secure-text-sub  { font-size: 0.65rem; color: rgba(48,209,88,0.6); margin-top: 3px; letter-spacing: 0.08em; }
-
-  /* ─────────────────────────── MISC ─────────────────────────── */
-  .divider {
-    height: 1px;
-    background: var(--border);
-    margin: 16px 0;
-  }
-
-  .section-label {
-    font-family: var(--font-mono);
-    font-size: 0.6rem;
-    letter-spacing: 0.2em;
-    color: var(--text-dim);
-    text-transform: uppercase;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .section-label::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--border);
-  }
-
-  .tag-row { display: flex; flex-wrap: wrap; gap: 6px; }
-
-  .tag {
-    font-family: var(--font-mono);
-    font-size: 0.6rem;
-    letter-spacing: 0.08em;
-    padding: 4px 10px;
-    background: rgba(0,0,0,0.3);
-    border: 1px solid var(--border);
-    border-radius: 2px;
-    color: var(--text-secondary);
-  }
-
-  /* ─────────────────────────── SCROLLBAR ─────────────────────────── */
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: rgba(0,220,255,0.15); border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: rgba(0,220,255,0.3); }
-
-  /* ─────────────────────────── RESPONSIVE ─────────────────────────── */
-  @media (max-width: 900px) {
-    .main-grid { grid-template-columns: 1fr; }
-    #panel-radar, #panel-patcher, #panel-fingerprint, #panel-ai, #panel-results {
-      grid-column: 1;
-    }
-    .stats-bar { flex-wrap: wrap; }
-    header { flex-direction: column; gap: 16px; align-items: flex-start; }
-  }
-
-  /* ─────────────────────────── NOTIFICATIONS ─────────────────────────── */
-  #toast {
-    position: fixed;
-    bottom: 24px; right: 24px;
-    z-index: 9999;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    pointer-events: none;
-  }
-
-  .toast-item {
-    padding: 12px 18px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    font-family: var(--font-mono);
-    font-size: 0.72rem;
-    letter-spacing: 0.06em;
-    color: var(--text-secondary);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-    animation: toast-in 0.3s ease, toast-out 0.3s ease 2.7s forwards;
-    border-left: 3px solid var(--cyan);
-    max-width: 320px;
-  }
-
-  .toast-item.error { border-left-color: var(--red); color: var(--red); }
-  .toast-item.ok    { border-left-color: var(--green); color: var(--green); }
-
-  @keyframes toast-in  { from { opacity:0; transform:translateX(16px); } to { opacity:1; transform:translateX(0); } }
-  @keyframes toast-out { from { opacity:1; } to { opacity:0; } }
-
-  /* ─────────────────────────── PATCH COMMANDS ─────────────────────────── */
-  .patch-cmd {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 12px;
-    background: rgba(0,0,0,0.5);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    margin-bottom: 6px;
-    cursor: pointer;
-    transition: var(--transition);
-  }
-
-  .patch-cmd:hover { border-color: var(--border-bright); }
-
-  .patch-cmd-text {
-    font-family: var(--font-mono);
-    font-size: 0.7rem;
-    color: var(--green);
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .patch-copy-btn {
-    font-family: var(--font-mono);
-    font-size: 0.55rem;
-    color: var(--text-dim);
-    letter-spacing: 0.1em;
-    background: none;
-    border: none;
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: var(--transition);
-  }
-
-  .patch-copy-btn:hover { color: var(--cyan); }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NETGUARD — Security Operations Console</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/scanner/style.css">
 </head>
 <body>
+  <div id="app" class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar-top">
+        <div class="brand">
+          <div class="brand-mark">
+            <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="4" y="4" width="36" height="36" rx="12" fill="#EEF2FF"/>
+              <path d="M22 10L31 14.5V22.8C31 28.1 27.4 32.7 22 34C16.6 32.7 13 28.1 13 22.8V14.5L22 10Z" fill="#6366F1"/>
+              <path d="M18.6 22.4L21 24.8L26 19.8" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="brand-copy">
+            <div class="brand-title">NETGUARD</div>
+            <div class="brand-subtitle">Premium Security Operations Console</div>
+          </div>
+        </div>
 
-<div id="app">
+        <div class="mission-card">
+          <div class="mission-kicker">Operator Workspace</div>
+          <h3>Threat-aware visibility for every authenticated session.</h3>
+          <p>Discover hosts, analyze exposed services, review your own scan history, and launch guided remediation from one hardened command center.</p>
+        </div>
 
-  <!-- ── HEADER ── -->
-  <header>
-    <div class="logo-block">
-      <div class="logo-icon">
-        <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <polygon points="22,2 42,12 42,32 22,42 2,32 2,12" stroke="#00dcff" stroke-width="1.5" fill="rgba(0,220,255,0.05)"/>
-          <polygon points="22,8 36,15 36,29 22,36 8,29 8,15" stroke="#00dcff" stroke-width="1" opacity="0.4" fill="none"/>
-          <circle cx="22" cy="22" r="5" fill="#00dcff" opacity="0.9"/>
-          <line x1="22" y1="2"  x2="22" y2="8"  stroke="#00dcff" stroke-width="1" opacity="0.5"/>
-          <line x1="42" y1="12" x2="36" y2="15" stroke="#00dcff" stroke-width="1" opacity="0.5"/>
-          <line x1="42" y1="32" x2="36" y2="29" stroke="#00dcff" stroke-width="1" opacity="0.5"/>
-          <line x1="22" y1="42" x2="22" y2="36" stroke="#00dcff" stroke-width="1" opacity="0.5"/>
-          <line x1="2"  y1="32" x2="8"  y2="29" stroke="#00dcff" stroke-width="1" opacity="0.5"/>
-          <line x1="2"  y1="12" x2="8"  y2="15" stroke="#00dcff" stroke-width="1" opacity="0.5"/>
-        </svg>
+        <div class="sidebar-section">
+          <div class="sidebar-caption">Navigation</div>
+          <nav class="sidebar-nav">
+            <a href="#hero-topbar" class="nav-link active">Overview</a>
+            <a href="#panel-radar" class="nav-link">Network Radar</a>
+            <a href="#panel-activity" class="nav-link">Your Activity</a>
+            <a href="#panel-patcher" class="nav-link">Auto-Patcher</a>
+            <a href="#panel-fingerprint" class="nav-link">Host Profile</a>
+            <a href="#panel-ai" class="nav-link">AI Copilot</a>
+            <a href="#panel-results" class="nav-link">Threat Logs</a>
+          </nav>
+        </div>
       </div>
-      <div>
-        <div class="logo-text">NETGUARD</div>
-        <div class="logo-sub">Network Intelligence Platform</div>
-      </div>
-    </div>
 
-    <div class="stats-bar">
-      <div class="stat-chip" id="chip-devices">
-        <div class="stat-label">Devices</div>
-        <div class="stat-value" id="val-devices">—</div>
+      <div class="sidebar-bottom">
+        <div class="user-profile-pill">
+          <span class="user-avatar">{{ user.username|first|upper }}</span>
+          <div class="user-meta">
+            <span class="user-name">{{ user.get_full_name|default:user.username }}</span>
+            <span class="user-role">Authenticated Operator</span>
+          </div>
+          <a href="{% url 'logout' %}" class="logout-link">Logout</a>
+        </div>
       </div>
-      <div class="stat-chip" id="chip-critical">
-        <div class="stat-label">Critical</div>
-        <div class="stat-value" id="val-critical">—</div>
-      </div>
-      <div class="stat-chip" id="chip-safe">
-        <div class="stat-label">Safe Ports</div>
-        <div class="stat-value" id="val-safe">—</div>
-      </div>
-      <div class="stat-chip" id="chip-status">
-        <div class="stat-label">Status</div>
-        <div class="stat-value">
-          <span class="status-pill">
-            <span class="pulse-dot" id="status-dot"></span>
+    </aside>
+
+    <main class="main-canvas">
+      <section class="hero-topbar" id="hero-topbar">
+        <div class="hero-copy">
+          <div class="breadcrumb">Control Plane <span>/</span> Network Defense</div>
+          <h1 class="hero-title">Top-tier network defense for your personal security workspace.</h1>
+          <p class="hero-subtitle">
+            Launch subnet sweeps, inspect live exposure, preserve user-specific scan history, and convert findings
+            into precise remediation commands with AI-assisted context.
+          </p>
+          {% if privilege_warning %}
+          <div class="inline-warning">{{ privilege_warning }}</div>
+          {% endif %}
+        </div>
+
+        <div class="hero-status-card">
+          <div class="hero-status-label">Platform Status</div>
+          <div class="topbar-status">
+            <span class="status-dot" id="status-dot"></span>
             <span id="val-status">STANDBY</span>
-          </span>
-        </div>
-      </div>
-    </div>
-  </header>
-
-  <!-- ── MAIN GRID ── -->
-  <div class="main-grid">
-
-    <!-- ════════════════ NETWORK RADAR ════════════════ -->
-    <div class="panel" id="panel-radar">
-      <div class="panel-header">
-        <div class="panel-title-block">
-          <div class="panel-title">
-            <span class="icon">◎</span>
-            NETWORK RADAR
           </div>
-          <div class="panel-sub">Nmap-powered subnet discovery · ARP fallback</div>
-        </div>
-        <span class="panel-badge badge-cyan" id="radar-badge">IDLE</span>
-      </div>
-
-      <!-- Scan form -->
-      <div class="scan-form">
-        <div class="scan-input-wrap">
-          <input class="scan-input" id="manual-ip" type="text"
-                 placeholder="192.168.x.x or leave blank to auto-discover">
-        </div>
-        <button class="btn btn-primary btn-sm" id="btn-sweep" onclick="initiateNetworkScan()">
-          ⟳ SWEEP
-        </button>
-      </div>
-
-      <div class="section-label">Discovered Nodes</div>
-
-      <div class="device-list" id="device-list">
-        <div class="empty-state">
-          <div class="icon">◌</div>
-          Awaiting network sweep...
-        </div>
-      </div>
-    </div>
-
-    <!-- ════════════════ ZERO-TRUST PATCHER ════════════════ -->
-    <div class="panel" id="panel-patcher">
-      <div class="panel-header">
-        <div class="panel-title-block">
-          <div class="panel-title">
-            <span class="icon">⚙</span>
-            ZERO-TRUST PATCHER
+          <div class="hero-status-meta">
+            <span>Realtime host fingerprinting</span>
+            <span>User-scoped activity tracking</span>
           </div>
-          <div class="panel-sub">Dynamic OS-specific remediation engine</div>
         </div>
-        <span class="panel-badge badge-amber" id="patcher-badge">AWAITING</span>
-      </div>
+      </section>
 
-      <div class="terminal" id="terminal">
-        <div class="comment"># Awaiting threat detection...</div>
-        <div class="comment"># Auto-patcher will generate OS-specific</div>
-        <div class="comment"># firewall rules for all critical ports</div>
-        <div class="comment">#</div>
-        <div class="comment"># Tip: Run a network scan first, then</div>
-        <div class="comment"># click any device to deep-scan it.</div>
-        <span class="cursor"></span>
-      </div>
-    </div>
-
-    <!-- ════════════════ HOST FINGERPRINT ════════════════ -->
-    <div class="panel" id="panel-fingerprint">
-      <div class="panel-header">
-        <div class="panel-title-block">
-          <div class="panel-title">
-            <span class="icon">▣</span>
-            HOST FINGERPRINT
+      <section class="kpi-row">
+        <div class="kpi-card stat-chip" id="chip-devices">
+          <div class="kpi-head">
+            <div class="kpi-label stat-label">Discovered Nodes</div>
+            <div class="kpi-icon">◎</div>
           </div>
-          <div class="panel-sub">Local machine intelligence</div>
+          <div class="kpi-value stat-value" id="val-devices">—</div>
+          <div class="kpi-foot">Assets detected in your current sweep</div>
         </div>
-        <span class="panel-badge badge-green">LIVE</span>
-      </div>
 
-      <div class="fingerprint-grid" id="fp-grid">
-        <div class="fp-row">
-          <div class="fp-key">OS / Release</div>
-          <div class="fp-value" id="fp-os">Loading...</div>
-        </div>
-        <div class="fp-row">
-          <div class="fp-key">Architecture</div>
-          <div class="fp-value" id="fp-arch">—</div>
-        </div>
-        <div class="fp-row">
-          <div class="fp-key">Hostname</div>
-          <div class="fp-value" id="fp-node">—</div>
-        </div>
-        <div class="fp-row">
-          <div class="fp-key">Python Runtime</div>
-          <div class="fp-value" id="fp-python">—</div>
-        </div>
-        <div class="fp-row wide">
-          <div class="fp-key">Local IP Address</div>
-          <div class="fp-value highlight" id="fp-ip">—</div>
-        </div>
-        <div class="fp-row wide">
-          <div class="fp-key">MAC Address (Primary Interface)</div>
-          <div class="fp-value mac" id="fp-mac">—</div>
-        </div>
-        <div class="fp-row">
-          <div class="fp-key">Device Type</div>
-          <div class="fp-value" id="device-label-display">—</div>
-        </div>
-        <div class="fp-row">
-          <div class="fp-key">NIC Vendor</div>
-          <div class="fp-value" id="mac-vendor-display">—</div>
-        </div>
-      </div>
-
-      <div class="btn-download-wrap" id="btn-download-wrap" style="display:none;">
-        <button class="btn btn-danger" onclick="downloadLockdownScript()">
-          ⬇ DOWNLOAD LOCKDOWN SCRIPT
-        </button>
-      </div>
-    </div>
-
-    <!-- ════════════════ AI COPILOT ════════════════ -->
-    <div class="panel" id="panel-ai">
-      <div class="panel-header">
-        <div class="panel-title-block">
-          <div class="panel-title">
-            <span class="icon">◈</span>
-            AI COPILOT
+        <div class="kpi-card stat-chip" id="chip-critical">
+          <div class="kpi-head">
+            <div class="kpi-label stat-label">Critical Findings</div>
+            <div class="kpi-icon">!</div>
           </div>
-          <div class="panel-sub">Powered by Groq · Llama 3.1 8B Instant</div>
+          <div class="kpi-value stat-value" id="val-critical">—</div>
+          <div class="kpi-foot">High-risk services requiring priority response</div>
         </div>
-        <span class="panel-badge" style="color:var(--purple);border-color:var(--purple);background:rgba(191,90,242,0.08);">NEURAL</span>
-      </div>
 
-      <div class="quick-prompts">
-        <button class="quick-btn" onclick="quickPrompt('What is Port 3389 and why is it dangerous?')">Port 3389?</button>
-        <button class="quick-btn" onclick="quickPrompt('How do I secure SMB on Windows?')">Secure SMB</button>
-        <button class="quick-btn" onclick="quickPrompt('Explain EternalBlue exploit in simple terms.')">EternalBlue</button>
-        <button class="quick-btn" onclick="quickPrompt('What is brute-force attack and how to prevent it?')">Brute Force</button>
-        <button class="quick-btn" onclick="quickPrompt('How do I harden a Windows server firewall?')">Harden FW</button>
-      </div>
-
-      <div class="ai-messages" id="ai-messages">
-        <div class="msg ai">
-          <div class="msg-tag">NETGUARD AI //</div>
-          Hello. I'm your cybersecurity copilot. Ask me about port vulnerabilities, firewall hardening, attack vectors, or anything security-related. I'm backed by Llama 3.1 via Groq.
-        </div>
-      </div>
-
-      <div class="ai-input-row">
-        <input class="ai-input" id="ai-input" type="text"
-               placeholder="Ask about threats, mitigation, CVEs..."
-               onkeydown="if(event.key==='Enter') sendChat()">
-        <button class="btn-send" onclick="sendChat()">→</button>
-      </div>
-    </div>
-
-    <!-- ════════════════ SCAN RESULTS (full-width) ════════════════ -->
-    <div class="panel" id="panel-results">
-      <div class="panel-header">
-        <div class="panel-title-block">
-          <div class="panel-title">
-            <span class="icon">⚠</span>
-            THREAT INTELLIGENCE REPORT
+        <div class="kpi-card stat-chip" id="chip-safe">
+          <div class="kpi-head">
+            <div class="kpi-label stat-label">Safe Findings</div>
+            <div class="kpi-icon">✓</div>
           </div>
-          <div class="panel-sub" id="results-sub">Deep port scan · OS fingerprint · AI threat analysis</div>
+          <div class="kpi-value stat-value" id="val-safe">—</div>
+          <div class="kpi-foot">Lower-risk or informational findings</div>
         </div>
-        <div style="display:flex;gap:8px;align-items:center;" id="results-badges"></div>
-      </div>
 
-      <div class="results-header-bar" id="results-meta"></div>
-
-      <div id="results-content"></div>
-    </div>
-
-  </div><!-- /main-grid -->
-</div><!-- /app -->
-
-<div id="toast"></div>
-
-<!-- ═══════════════════════════════════ SCRIPT ═══════════════════════════════════ -->
-<script>
-// ── STATE ──────────────────────────────────────────────────────────────────
-let state = {
-  devices: [],
-  lastScan: null,
-  hostIp: null,
-  hostMac: null,
-  scanning: false,
-};
-
-// ── INIT ───────────────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-  loadFingerprint();
-});
-
-// ── TOAST ──────────────────────────────────────────────────────────────────
-function toast(msg, type = 'info') {
-  const el = document.createElement('div');
-  el.className = `toast-item${type === 'error' ? ' error' : type === 'ok' ? ' ok' : ''}`;
-  el.textContent = msg;
-  document.getElementById('toast').appendChild(el);
-  setTimeout(() => el.remove(), 3200);
-}
-
-// ── HOST FINGERPRINT ───────────────────────────────────────────────────────
-async function loadFingerprint() {
-  try {
-    const r = await fetch('/api/system/');
-    const d = await r.json();
-    document.getElementById('fp-os').textContent    = d.os_type      || '—';
-    document.getElementById('fp-arch').textContent  = d.architecture || '—';
-    document.getElementById('fp-node').textContent  = d.node_name    || '—';
-    document.getElementById('fp-python').textContent= d.python_version || '—';
-    document.getElementById('fp-ip').textContent    = d.local_ip     || '—';
-    document.getElementById('fp-mac').textContent   = d.mac_address  || 'N/A';
-    document.getElementById('device-label-display').textContent = (d.device_icon || '🔌') + ' ' + (d.device_label || 'Unknown Device');
-    document.getElementById('mac-vendor-display').textContent   = d.mac_vendor || 'Unknown Vendor';
-    state.hostIp  = d.local_ip;
-    state.hostMac = d.mac_address;
-  } catch(e) {
-    toast('Failed to load host fingerprint', 'error');
-  }
-}
-
-// ── NETWORK SCAN ───────────────────────────────────────────────────────────
-async function initiateNetworkScan() {
-  if (state.scanning) return;
-  state.scanning = true;
-
-  const btn   = document.getElementById('btn-sweep');
-  const badge = document.getElementById('radar-badge');
-  const list  = document.getElementById('device-list');
-  const statusDot = document.getElementById('status-dot');
-
-  btn.textContent  = '⟳ SCANNING';
-  btn.classList.add('scanning');
-  badge.textContent = 'SWEEPING';
-  badge.className  = 'panel-badge badge-amber';
-  statusDot.className = 'pulse-dot warn';
-  document.getElementById('val-status').textContent = 'SWEEPING';
-
-  list.innerHTML = `
-    <div class="loader">
-      <div class="loader-bars">
-        <div class="loader-bar"></div><div class="loader-bar"></div>
-        <div class="loader-bar"></div><div class="loader-bar"></div>
-      </div>
-      Pinging subnet...
-    </div>`;
-
-  try {
-    const res = await fetch('/api/arp/');
-    const devices = await res.json();
-    state.devices = devices;
-    renderDeviceList(devices);
-    updateChip('devices', devices.length, '', 'active');
-    badge.textContent = `${devices.length} NODES`;
-    badge.className = 'panel-badge badge-green';
-    statusDot.className = 'pulse-dot';
-    document.getElementById('val-status').textContent = 'ACTIVE';
-    toast(`${devices.length} device${devices.length !== 1 ? 's' : ''} discovered`, 'ok');
-  } catch(e) {
-    toast('Network sweep failed: ' + e.message, 'error');
-    badge.textContent = 'ERROR';
-    badge.className = 'panel-badge badge-red';
-    list.innerHTML = '<div class="empty-state"><div class="icon">✕</div>Sweep failed. Is nmap installed?</div>';
-  } finally {
-    state.scanning = false;
-    btn.textContent = '⟳ SWEEP';
-    btn.classList.remove('scanning');
-  }
-}
-
-function renderDeviceList(devices) {
-  const list = document.getElementById('device-list');
-  if (!devices.length) {
-    list.innerHTML = '<div class="empty-state"><div class="icon">◌</div>No devices found.</div>';
-    return;
-  }
-
-  list.innerHTML = devices.map((d, i) => {
-    const isSelf    = d.status === 'self' || d.ip === state.hostIp;
-    const badgeHtml = isSelf
-      ? '<span class="device-badge host">HOST</span>'
-      : d.status === 'cached'
-        ? '<span class="device-badge cached">ARP CACHED</span>'
-        : '<span class="device-badge remote">REMOTE</span>';
-
-    return `
-      <div class="device-row ${isSelf ? 'self-host' : ''}" onclick="selectDevice('${d.ip}')">
-        <div class="device-indicator ${isSelf ? 'self' : ''}"></div>
-        <div class="device-info">
-          <div class="device-ip">${d.ip}</div>
-          <div class="device-mac">MAC: ${d.mac || 'N/A'}</div>
+        <div class="kpi-card stat-chip" id="chip-status">
+          <div class="kpi-head">
+            <div class="kpi-label stat-label">Operating Mode</div>
+            <div class="kpi-icon">◈</div>
+          </div>
+          <div class="kpi-value kpi-status"><span id="kpi-status-text">Standby</span></div>
+          <div class="kpi-foot">Live engine state for scans and analysis</div>
         </div>
-        ${badgeHtml}
-        <button class="btn-scan-device" onclick="event.stopPropagation(); scanDevice('${d.ip}')">
-          SCAN →
-        </button>
-      </div>`;
-  }).join('');
-}
+      </section>
 
-function selectDevice(ip) {
-  document.getElementById('manual-ip').value = ip;
-  // Highlight
-  document.querySelectorAll('.device-row').forEach(r => r.classList.remove('selected'));
-  event.currentTarget && event.currentTarget.classList.add('selected');
-}
+      <section class="content-grid">
+        <section class="panel panel-hero" id="panel-radar">
+          <div class="panel-header">
+            <div class="panel-heading">
+              <div class="panel-eyebrow">Discovery</div>
+              <h2 class="panel-title">Network Radar</h2>
+              <p class="panel-sub">Sweep your subnet or manually target a host for deep inspection and threat analysis.</p>
+            </div>
+            <span class="panel-badge badge-neutral" id="radar-badge">Idle</span>
+          </div>
 
-// ── PORT SCAN ──────────────────────────────────────────────────────────────
-async function scanDevice(ip) {
-  if (!ip) {
-    ip = document.getElementById('manual-ip').value.trim();
-    if (!ip) { toast('Enter a target IP first', 'error'); return; }
-  }
+          <div class="scan-form">
+            <div class="scan-input-wrap">
+              <input class="scan-input" id="manual-ip" type="text" placeholder="192.168.x.x or leave blank to auto-discover">
+            </div>
+            <button class="btn btn-primary btn-sm" id="btn-sweep" onclick="initiateNetworkScan()">Sweep</button>
+          </div>
 
-  const terminal  = document.getElementById('terminal');
-  const pBadge    = document.getElementById('patcher-badge');
-  const statusDot = document.getElementById('status-dot');
+          <div class="panel-mini-grid">
+            <div class="mini-stat">
+              <span class="mini-label">Operator</span>
+              <strong>{{ user.username }}</strong>
+            </div>
+            <div class="mini-stat">
+              <span class="mini-label">Session</span>
+              <strong>Authenticated</strong>
+            </div>
+            <div class="mini-stat">
+              <span class="mini-label">Target Input</span>
+              <strong id="selected-target-copy">Auto Discovery</strong>
+            </div>
+          </div>
 
-  terminal.innerHTML = `
-    <div class="prompt">[NETGUARD] <span class="cmd">Initiating deep scan → ${ip}</span></div>
-    <div class="comment"># Port scan + OS fingerprint + AI analysis</div>
-    <div class="comment"># This may take 30–120 seconds...</div>
-    <br>
-    <div class="loader">
-      <div class="loader-bars">
-        <div class="loader-bar"></div><div class="loader-bar"></div>
-        <div class="loader-bar"></div><div class="loader-bar"></div>
-      </div>
-      Running nmap...
-    </div>`;
+          <div class="section-label">Discovered Devices</div>
+          <div class="device-list" id="device-list">
+            <div class="empty-state">
+              <div class="empty-icon">◌</div>
+              <div>Awaiting network sweep</div>
+              <p>Launch a subnet scan to enumerate nearby hosts.</p>
+            </div>
+          </div>
+        </section>
 
-  pBadge.textContent = 'SCANNING';
-  pBadge.className = 'panel-badge badge-amber';
-  statusDot.className = 'pulse-dot alert';
-  document.getElementById('val-status').textContent = 'SCANNING';
+        <section class="panel" id="panel-activity">
+          <div class="panel-header">
+            <div class="panel-heading">
+              <div class="panel-eyebrow">User Context</div>
+              <h2 class="panel-title">Your Activity</h2>
+              <p class="panel-sub">Recent scan history is tied to your account so each user sees their own operational trail.</p>
+            </div>
+            <span class="panel-badge badge-brand" id="activity-badge">Account</span>
+          </div>
 
-  try {
-    const res  = await fetch('/api/scan/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ target: ip }),
+          <div class="activity-summary">
+            <div class="activity-user-card">
+              <div class="activity-avatar">{{ user.username|first|upper }}</div>
+              <div>
+                <div class="activity-user-label">Signed in as</div>
+                <div class="activity-user-username">{{ user.get_full_name|default:user.username }}</div>
+              </div>
+            </div>
+
+            <div class="activity-meta-list">
+              <div class="activity-meta-item">
+                <span class="activity-meta-label">Recent scans</span>
+                <strong id="activity-count">0</strong>
+              </div>
+              <div class="activity-meta-item">
+                <span class="activity-meta-label">Last target</span>
+                <strong id="activity-last-target">None yet</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="activity-feed" id="activity-list">
+            <div class="activity-empty">
+              <div class="empty-icon">◎</div>
+              <div>No recent authenticated scan history yet.</div>
+              <p>Your account-specific history will appear here after you run scans.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" id="panel-patcher">
+          <div class="panel-header">
+            <div class="panel-heading">
+              <div class="panel-eyebrow">Response Automation</div>
+              <h2 class="panel-title">Auto-Patcher</h2>
+              <p class="panel-sub">OS-aware remediation commands rendered for rapid containment and firewall hardening.</p>
+            </div>
+            <span class="panel-badge badge-neutral" id="patcher-badge">Awaiting</span>
+          </div>
+
+          <div class="terminal" id="terminal">
+            <div>Awaiting threat detection...</div>
+            <div>Auto-patcher will generate OS-specific firewall rules for critical ports.</div>
+            <div>Run a network scan and inspect a device to begin.</div>
+            <span class="cursor"></span>
+          </div>
+        </section>
+
+        <section class="panel" id="panel-fingerprint">
+          <div class="panel-header">
+            <div class="panel-heading">
+              <div class="panel-eyebrow">Host Profile</div>
+              <h2 class="panel-title">Host Fingerprint</h2>
+              <p class="panel-sub">Real-time system identity and local environment metadata for the active operator workstation.</p>
+            </div>
+            <span class="panel-badge badge-safe">Live</span>
+          </div>
+
+          <div class="fingerprint-grid" id="fp-grid">
+            <div class="fp-row">
+              <div class="fp-key">OS / Release</div>
+              <div class="fp-value" id="fp-os">Loading...</div>
+            </div>
+            <div class="fp-row">
+              <div class="fp-key">Architecture</div>
+              <div class="fp-value" id="fp-arch">—</div>
+            </div>
+            <div class="fp-row">
+              <div class="fp-key">Hostname</div>
+              <div class="fp-value" id="fp-node">—</div>
+            </div>
+            <div class="fp-row">
+              <div class="fp-key">Python Runtime</div>
+              <div class="fp-value" id="fp-python">—</div>
+            </div>
+            <div class="fp-row wide">
+              <div class="fp-key">Local IP Address</div>
+              <div class="fp-value highlight" id="fp-ip">—</div>
+            </div>
+            <div class="fp-row wide">
+              <div class="fp-key">MAC Address</div>
+              <div class="fp-value mac" id="fp-mac">—</div>
+            </div>
+            <div class="fp-row">
+              <div class="fp-key">Device Type</div>
+              <div class="fp-value" id="device-label-display">—</div>
+            </div>
+            <div class="fp-row">
+              <div class="fp-key">NIC Vendor</div>
+              <div class="fp-value" id="mac-vendor-display">—</div>
+            </div>
+          </div>
+
+          <div class="btn-download-wrap" id="btn-download-wrap" style="display:none;">
+            <button class="btn btn-danger" onclick="downloadLockdownScript()">Download Lockdown Script</button>
+          </div>
+        </section>
+
+        <section class="panel" id="panel-ai">
+          <div class="panel-header">
+            <div class="panel-heading">
+              <div class="panel-eyebrow">Assistant</div>
+              <h2 class="panel-title">AI Copilot</h2>
+              <p class="panel-sub">Threat context, plain-language remediation, and operator-friendly security guidance.</p>
+            </div>
+            <span class="panel-badge badge-brand">Neural</span>
+          </div>
+
+          <div class="quick-prompts">
+            <button class="quick-btn" onclick="quickPrompt('What is Port 3389 and why is it dangerous?')">Port 3389?</button>
+            <button class="quick-btn" onclick="quickPrompt('How do I secure SMB on Windows?')">Secure SMB</button>
+            <button class="quick-btn" onclick="quickPrompt('Explain EternalBlue exploit in simple terms.')">EternalBlue</button>
+            <button class="quick-btn" onclick="quickPrompt('What is brute-force attack and how to prevent it?')">Brute Force</button>
+            <button class="quick-btn" onclick="quickPrompt('How do I harden a Windows server firewall?')">Harden FW</button>
+          </div>
+
+          <div class="ai-messages" id="ai-messages">
+            <div class="msg ai">
+              <div class="msg-tag">NETGUARD AI</div>
+              Hello. I'm your cybersecurity copilot. Ask about port vulnerabilities, firewall hardening, attack vectors, or anything security-related.
+            </div>
+          </div>
+
+          <div class="ai-input-row">
+            <input class="ai-input" id="ai-input" type="text" placeholder="Ask about threats, misconfigurations, mitigation, CVEs..." onkeydown="if(event.key==='Enter') sendChat()">
+            <button class="btn btn-send" onclick="sendChat()">Send</button>
+          </div>
+        </section>
+
+        <section class="panel panel-results" id="panel-results">
+          <div class="panel-header">
+            <div class="panel-heading">
+              <div class="panel-eyebrow">Threat Logs</div>
+              <h2 class="panel-title">Threat Intelligence Report</h2>
+              <p class="panel-sub" id="results-sub">Deep port scan, OS fingerprint, and AI threat analysis.</p>
+            </div>
+            <div class="results-badges" id="results-badges"></div>
+          </div>
+
+          <div class="results-header-bar" id="results-meta"></div>
+          <div id="results-content"></div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast"></div>
+
+  <script>
+    const state = {
+      devices: [],
+      lastScan: null,
+      hostIp: null,
+      hostMac: null,
+      scanning: false
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadFingerprint();
+      loadUserActivity();
+      wireDashboardInteractions();
     });
-    const data = await res.json();
 
-    if (data.error) throw new Error(data.error);
-    state.lastScan = data;
+    function wireDashboardInteractions() {
+      const manualIp = document.getElementById('manual-ip');
+      if (!manualIp) return;
 
-    renderScanResults(data);
-    renderPatcher(data);
-    updateHeaderStats(data);
-
-    pBadge.textContent = data.results?.length ? 'THREATS FOUND' : 'CLEAN';
-    pBadge.className   = data.results?.length ? 'panel-badge badge-red' : 'panel-badge badge-green';
-    statusDot.className = data.results?.length ? 'pulse-dot alert' : 'pulse-dot';
-    document.getElementById('val-status').textContent = data.results?.length ? 'THREAT' : 'SECURE';
-
-    // Show download btn if host scan found vulnerabilities
-    if (data.is_host && data.host_script) {
-      document.getElementById('btn-download-wrap').style.display = 'flex';
+      manualIp.addEventListener('input', () => {
+        const value = manualIp.value.trim();
+        document.getElementById('selected-target-copy').textContent = value || 'Auto Discovery';
+      });
     }
 
-  } catch(e) {
-    toast('Scan failed: ' + e.message, 'error');
-    terminal.innerHTML = `
-      <div class="error">[ERROR] ${e.message}</div>
-      <div class="comment"># Check if nmap is installed and accessible</div>
-      <div class="comment"># Windows: choco install nmap</div>
-      <div class="comment"># Linux:   sudo apt install nmap</div>`;
-    pBadge.textContent = 'ERROR';
-    pBadge.className = 'panel-badge badge-red';
-  }
-}
-
-function updateHeaderStats(data) {
-  const critical = (data.results || []).filter(r => r.risk === 'CRITICAL').length;
-  const safe     = (data.results || []).filter(r => r.risk !== 'CRITICAL').length;
-
-  updateChip('critical', critical, '', critical > 0 ? 'danger' : 'success');
-  updateChip('safe',     safe,     '', safe > 0 ? 'success' : '');
-}
-
-function updateChip(id, value, label, cls) {
-  const chip = document.getElementById(`chip-${id}`);
-  const val  = document.getElementById(`val-${id}`);
-  if (!chip || !val) return;
-  val.textContent = value;
-  chip.className = `stat-chip${cls ? ' ' + cls : ''}`;
-}
-
-// ── RENDER SCAN RESULTS ────────────────────────────────────────────────────
-function renderScanResults(data) {
-  const panel   = document.getElementById('panel-results');
-  const content = document.getElementById('results-content');
-  const meta    = document.getElementById('results-meta');
-  const badges  = document.getElementById('results-badges');
-
-  panel.classList.add('visible');
-  panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-  // Meta row
-  meta.innerHTML = `
-    <span class="results-target">TARGET // <span>${data.target}</span></span>
-    ${data.os_detected ? `<span class="os-chip">◉ OS DETECT: ${data.os_detected}</span>` : ''}
-    ${data.os_inferred && data.os_inferred !== 'Unknown'
-      ? `<span class="os-chip" style="border-color:rgba(0,220,255,0.2);color:var(--cyan-dim);">◉ INFERRED: ${data.os_inferred}</span>` : ''}`;
-
-  badges.innerHTML = `
-    <span class="panel-badge ${data.results?.length ? 'badge-red' : 'badge-green'}">
-      ${data.results?.length ? `${data.results.length} THREAT${data.results.length > 1 ? 'S' : ''}` : 'ALL CLEAR'}
-    </span>`;
-
-  // SECURE case
-  if (!data.results?.length) {
-    content.innerHTML = `
-      <div class="secure-banner">
-        <div class="secure-icon">✦</div>
-        <div>
-          <div class="secure-text-main">NO VULNERABILITIES DETECTED</div>
-          <div class="secure-text-sub">All scanned ports are closed or filtered. Risk Score: 100/100</div>
-        </div>
-      </div>`;
-    return;
-  }
-
-  // Risk bar
-  const score     = data.risk_score || 0;
-  const scoreColor = score >= 70 ? 'var(--green)' : score >= 40 ? 'var(--amber)' : 'var(--red)';
-
-  // Build threats HTML
-  const aiMap = {};
-  (data.ai_explanations || []).forEach(a => { aiMap[a.port] = a.explanation; });
-
-  const threatsHtml = (data.results || []).map(r => {
-    const cls = r.risk.toLowerCase();
-    const ai  = aiMap[r.port];
-    return `
-      <div class="threat-row ${cls}">
-        <div>
-          <div class="threat-port">${r.port}</div>
-          <div class="threat-risk-chip">${r.risk}</div>
-        </div>
-        <div class="threat-body">
-          <div class="threat-service">${r.service}</div>
-          <div class="threat-analysis">${r.analysis}</div>
-          ${ai ? `
-            <div class="threat-ai">
-              <div class="threat-ai-label">◈ AI ANALYSIS //</div>
-              ${ai}
-            </div>` : ''}
-        </div>
-      </div>`;
-  }).join('');
-
-  // Patch commands
-  const patchHtml = (data.patch_commands || []).length
-    ? `
-      <div class="section-label">Remediation Commands</div>
-      ${data.patch_commands.map(cmd => `
-        <div class="patch-cmd" onclick="copyCmd(this, '${cmd.replace(/'/g,"\\'")}')">
-          <div class="patch-cmd-text">${cmd}</div>
-          <button class="patch-copy-btn">COPY</button>
-        </div>`).join('')}`
-    : '';
-
-  content.innerHTML = `
-    <div class="risk-bar-wrap">
-      <div class="risk-bar-header">
-        <span class="risk-bar-label">SCORE</span>
-        <span class="risk-score-num" style="color:${scoreColor}">${score}<span style="font-size:0.7rem;color:var(--text-dim)">/100</span></span>
-      </div>
-      <div class="risk-bar-track">
-        <div class="risk-bar-fill" style="width:${score}%;background:${scoreColor}"></div>
-      </div>
-    </div>
-
-    <div class="section-label">Threat Matrix</div>
-    <div class="threat-list">${threatsHtml}</div>
-
-    ${patchHtml}`;
-}
-
-// ── RENDER PATCHER TERMINAL ────────────────────────────────────────────────
-function renderPatcher(data) {
-  const terminal = document.getElementById('terminal');
-  const lines    = [];
-
-  lines.push(`<div class="prompt">[NETGUARD] <span class="cmd">Scan complete → ${data.target}</span></div>`);
-  lines.push(`<div class="info"># OS Detected: ${data.os_detected || 'Unknown'}</div>`);
-  lines.push(`<div class="info"># OS Inferred: ${data.os_inferred || 'Unknown'}</div>`);
-  lines.push(`<div class="info"># Risk Score:  ${data.risk_score}/100</div>`);
-  lines.push('<br>');
-
-  if (!data.results?.length) {
-    lines.push('<div class="success">[✓] No critical ports detected — system is SECURE</div>');
-  } else {
-    lines.push(`<div class="error">[!] ${data.results.length} vulnerable port(s) detected</div>`);
-    lines.push('<br>');
-    lines.push('<div class="comment"># Auto-generated remediation commands:</div>');
-
-    (data.patch_commands || []).forEach(cmd => {
-      lines.push(`<div class="prompt">$ <span class="cmd">${cmd}</span></div>`);
-    });
-
-    if (!data.patch_commands?.length) {
-      lines.push('<div class="warn"># Manual review required for this OS type</div>');
+    function toast(msg, type = 'info') {
+      const el = document.createElement('div');
+      el.className = `toast-item${type === 'error' ? ' error' : type === 'ok' ? ' ok' : ''}`;
+      el.textContent = msg;
+      document.getElementById('toast').appendChild(el);
+      setTimeout(() => el.remove(), 3200);
     }
-  }
 
-  if (data.is_host && data.host_script) {
-    lines.push('<br>');
-    lines.push('<div class="success">[✓] Host lockdown script ready for download</div>');
-  }
-
-  lines.push('<span class="cursor"></span>');
-  terminal.innerHTML = lines.join('\n');
-}
-
-// ── DOWNLOAD LOCKDOWN SCRIPT ───────────────────────────────────────────────
-async function downloadLockdownScript() {
-  if (!state.hostIp) { toast('Host IP unknown', 'error'); return; }
-  try {
-    const res = await fetch('/api/download-script/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ target: state.hostIp }),
-    });
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error || 'Download failed');
+    function setStatus(label, tone = 'default') {
+      const dot = document.getElementById('status-dot');
+      const statusText = document.getElementById('val-status');
+      const kpiText = document.getElementById('kpi-status-text');
+      dot.className = `status-dot${tone ? ` ${tone}` : ''}`;
+      statusText.textContent = label;
+      kpiText.textContent = label.charAt(0) + label.slice(1).toLowerCase();
     }
-    const blob = await res.blob();
-    const cd   = res.headers.get('Content-Disposition') || '';
-    const fn   = cd.match(/filename="?([^"]+)"?/)?.[1] || 'netguard_lockdown.bat';
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href = url; a.download = fn; a.click();
-    URL.revokeObjectURL(url);
-    toast('Lockdown script downloaded: ' + fn, 'ok');
-  } catch(e) {
-    toast('Download failed: ' + e.message, 'error');
-  }
-}
 
-// ── AI CHAT ────────────────────────────────────────────────────────────────
-async function sendChat() {
-  const input   = document.getElementById('ai-input');
-  const msgs    = document.getElementById('ai-messages');
-  const prompt  = input.value.trim();
-  if (!prompt) return;
-  input.value = '';
+    async function loadFingerprint() {
+      try {
+        const response = await fetch('/api/system/');
+        const data = await response.json();
 
-  // User message
-  msgs.innerHTML += `
-    <div class="msg user">
-      <div class="msg-tag">YOU //</div>
-      ${escHtml(prompt)}
-    </div>`;
+        document.getElementById('fp-os').textContent = data.os_type || '—';
+        document.getElementById('fp-arch').textContent = data.architecture || '—';
+        document.getElementById('fp-node').textContent = data.node_name || '—';
+        document.getElementById('fp-python').textContent = data.python_version || '—';
+        document.getElementById('fp-ip').textContent = data.local_ip || '—';
+        document.getElementById('fp-mac').textContent = data.mac_address || 'N/A';
+        document.getElementById('device-label-display').textContent = `${data.device_icon || '🔌'} ${data.device_label || 'Unknown Device'}`;
+        document.getElementById('mac-vendor-display').textContent = data.mac_vendor || 'Unknown Vendor';
 
-  // Loading
-  const loadId = 'ai-load-' + Date.now();
-  msgs.innerHTML += `
-    <div class="msg ai" id="${loadId}">
-      <div class="msg-tag">NETGUARD AI //</div>
-      <div class="loader" style="padding:4px 0;">
-        <div class="loader-bars">
-          <div class="loader-bar"></div><div class="loader-bar"></div>
-          <div class="loader-bar"></div><div class="loader-bar"></div>
+        state.hostIp = data.local_ip;
+        state.hostMac = data.mac_address;
+      } catch (error) {
+        toast('Failed to load host fingerprint', 'error');
+      }
+    }
+
+    async function loadUserActivity() {
+      try {
+        const response = await fetch('/api/history/');
+        const payload = await response.json();
+        renderActivity(payload);
+      } catch (error) {
+        renderActivity({ history: [] });
+      }
+    }
+
+    function renderActivity(payload) {
+      const list = document.getElementById('activity-list');
+      const count = document.getElementById('activity-count');
+      const lastTarget = document.getElementById('activity-last-target');
+      const badge = document.getElementById('activity-badge');
+      const entries = Array.isArray(payload.history) ? payload.history.slice(0, 6) : [];
+
+      count.textContent = entries.length;
+      lastTarget.textContent = entries.length ? (entries[0].target_label || entries[0].target_ip || 'Unknown') : 'None yet';
+
+      if (!entries.length) {
+        badge.textContent = 'Ready';
+        badge.className = 'panel-badge badge-neutral';
+        list.innerHTML = `
+          <div class="activity-empty">
+            <div class="empty-icon">◎</div>
+            <div>No recent authenticated scan history yet.</div>
+            <p>Your account-specific history will appear here after you run scans.</p>
+          </div>
+        `;
+        return;
+      }
+
+      badge.textContent = `${entries.length} Recent`;
+      badge.className = 'panel-badge badge-safe';
+      list.innerHTML = entries.map((item) => `
+        <article class="activity-item">
+          <div class="activity-item-top">
+            <div>
+              <div class="activity-target">${escHtml(item.target_label || item.target_ip || 'Unknown Target')}</div>
+              <div class="activity-time">${escHtml(item.timestamp || 'Recent activity')}</div>
+            </div>
+            <span class="activity-risk ${riskToneClass(item.status || item.critical_count)}">
+              ${escHtml(item.status || 'Recorded')}
+            </span>
+          </div>
+          <div class="activity-item-meta">
+            <span>Open Ports: ${escHtml(String(item.open_port_count ?? '—'))}</span>
+            <span>Critical: ${escHtml(String(item.critical_count ?? '—'))}</span>
+            <span>Risk Score: ${escHtml(String(item.risk_score ?? '—'))}</span>
+          </div>
+        </article>
+      `).join('');
+    }
+
+    function riskToneClass(value) {
+      const upper = String(value).toUpperCase();
+      if (upper.includes('CRITICAL') || upper.includes('THREAT')) return 'is-critical';
+      if (upper.includes('WARN') || upper.includes('MEDIUM')) return 'is-warn';
+      if (upper.includes('SAFE') || upper.includes('LOW') || upper.includes('SECURE') || upper.includes('COMPLETED')) return 'is-safe';
+      return 'is-neutral';
+    }
+
+    async function initiateNetworkScan() {
+      if (state.scanning) return;
+      state.scanning = true;
+
+      const btn = document.getElementById('btn-sweep');
+      const badge = document.getElementById('radar-badge');
+      const list = document.getElementById('device-list');
+
+      btn.textContent = 'Scanning';
+      btn.classList.add('scanning');
+      badge.textContent = 'Sweeping';
+      badge.className = 'panel-badge badge-warn';
+      setStatus('SWEEPING', 'warn');
+
+      list.innerHTML = `
+        <div class="loader loader-block">
+          <div class="loader-bars">
+            <div class="loader-bar"></div><div class="loader-bar"></div>
+            <div class="loader-bar"></div><div class="loader-bar"></div>
+          </div>
+          <span>Pinging subnet and enumerating nearby devices...</span>
         </div>
-        Thinking...
-      </div>
-    </div>`;
+      `;
 
-  msgs.scrollTop = msgs.scrollHeight;
+      try {
+        const response = await fetch('/api/arp/');
+        const devices = await response.json();
 
-  try {
-    const res  = await fetch('/api/chat/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt }),
-    });
-    const data = await res.json();
-    const reply = data.response || data.error || 'No response';
+        if (!response.ok || devices.error) {
+          throw new Error(devices.error || 'Unable to complete subnet sweep');
+        }
 
-    document.getElementById(loadId).innerHTML = `
-      <div class="msg-tag">NETGUARD AI //</div>
-      ${escHtml(reply)}`;
-  } catch(e) {
-    document.getElementById(loadId).innerHTML = `
-      <div class="msg-tag">NETGUARD AI //</div>
-      <span style="color:var(--red)">Error: ${escHtml(e.message)}</span>`;
-  }
+        state.devices = devices;
+        renderDeviceList(devices);
+        updateChip('devices', devices.length, devices.length ? 'active' : '');
+        badge.textContent = `${devices.length} Nodes`;
+        badge.className = 'panel-badge badge-safe';
+        setStatus('ACTIVE', 'safe');
+        toast(`${devices.length} device${devices.length !== 1 ? 's' : ''} discovered`, 'ok');
+      } catch (error) {
+        toast(`Network sweep failed: ${error.message}`, 'error');
+        badge.textContent = 'Error';
+        badge.className = 'panel-badge badge-critical';
+        list.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">✕</div>
+            <div>Sweep failed. Is nmap installed?</div>
+            <p>Verify local permissions and scanning dependencies.</p>
+          </div>
+        `;
+        setStatus('ERROR', 'critical');
+      } finally {
+        state.scanning = false;
+        btn.textContent = 'Sweep';
+        btn.classList.remove('scanning');
+      }
+    }
 
-  msgs.scrollTop = msgs.scrollHeight;
-}
+    function renderDeviceList(devices) {
+      const list = document.getElementById('device-list');
 
-function quickPrompt(text) {
-  document.getElementById('ai-input').value = text;
-  sendChat();
-}
+      if (!devices.length) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">◌</div>
+            <div>No devices found.</div>
+            <p>Try sweeping again or verify your network interface.</p>
+          </div>
+        `;
+        return;
+      }
 
-// ── UTILS ──────────────────────────────────────────────────────────────────
-function escHtml(str) {
-  return String(str)
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;');
-}
+      list.innerHTML = devices.map((device) => {
+        const isSelf = device.status === 'self' || device.ip === state.hostIp;
+        const badgeHtml = isSelf
+          ? '<span class="device-badge host">Host</span>'
+          : device.status === 'cached'
+            ? '<span class="device-badge cached">ARP Cached</span>'
+            : '<span class="device-badge remote">Remote</span>';
 
-function copyCmd(el, cmd) {
-  navigator.clipboard.writeText(cmd).then(() => {
-    const btn = el.querySelector('.patch-copy-btn');
-    if (btn) { btn.textContent = 'COPIED'; setTimeout(() => btn.textContent = 'COPY', 1500); }
-  });
-}
-</script>
+        return `
+          <div class="device-row ${isSelf ? 'self-host' : ''}" onclick="selectDevice(event, '${device.ip}')">
+            <div class="device-ping"></div>
+            <div class="device-info">
+              <div class="device-ip">${escHtml(device.ip)}</div>
+              <div class="device-mac">MAC: ${escHtml(device.mac || 'N/A')}</div>
+            </div>
+            ${badgeHtml}
+            <button class="btn-scan-device" onclick="event.stopPropagation(); scanDevice('${device.ip}', '${(device.device_label || '').replace(/'/g, "\\'")}')">Scan</button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function selectDevice(event, ip) {
+      document.getElementById('manual-ip').value = ip;
+      document.getElementById('selected-target-copy').textContent = ip;
+      document.querySelectorAll('.device-row').forEach((row) => row.classList.remove('selected'));
+      if (event.currentTarget) {
+        event.currentTarget.classList.add('selected');
+      }
+    }
+
+    async function scanDevice(ip, targetLabel = '') {
+      if (!ip) {
+        ip = document.getElementById('manual-ip').value.trim();
+        if (!ip) {
+          toast('Enter a target IP first', 'error');
+          return;
+        }
+      }
+
+      document.getElementById('selected-target-copy').textContent = ip;
+
+      const terminal = document.getElementById('terminal');
+      const patcherBadge = document.getElementById('patcher-badge');
+
+      terminal.innerHTML = `
+        <div><span class="terminal-accent">[NETGUARD]</span> Initiating deep scan → ${escHtml(ip)}</div>
+        <div class="terminal-muted">Port scan + OS fingerprint + AI analysis</div>
+        <div class="terminal-muted">This may take 30–120 seconds...</div>
+        <div class="loader terminal-loader">
+          <div class="loader-bars">
+            <div class="loader-bar"></div><div class="loader-bar"></div>
+            <div class="loader-bar"></div><div class="loader-bar"></div>
+          </div>
+          <span>Running nmap and building threat profile...</span>
+        </div>
+      `;
+
+      patcherBadge.textContent = 'Scanning';
+      patcherBadge.className = 'panel-badge badge-warn';
+      setStatus('SCANNING', 'critical');
+
+      try {
+        const response = await fetch('/api/scan/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ target: ip, target_label: targetLabel || ip })
+        });
+        const data = await response.json();
+
+        if (!response.ok || data.error) {
+          throw new Error(data.error || 'Scan failed');
+        }
+
+        state.lastScan = data;
+        renderScanResults(data);
+        renderPatcher(data);
+        updateHeaderStats(data);
+        prependActivityFromScan(data);
+
+        patcherBadge.textContent = data.results?.length ? 'Threats Found' : 'Clean';
+        patcherBadge.className = data.results?.length ? 'panel-badge badge-critical' : 'panel-badge badge-safe';
+        setStatus(data.results?.length ? 'THREAT' : 'SECURE', data.results?.length ? 'critical' : 'safe');
+
+        if (data.is_host && data.host_script) {
+          document.getElementById('btn-download-wrap').style.display = 'flex';
+        }
+      } catch (error) {
+        toast(`Scan failed: ${error.message}`, 'error');
+        terminal.innerHTML = `
+          <div class="terminal-error">[ERROR] ${escHtml(error.message)}</div>
+          <div class="terminal-muted">Check if nmap is installed and accessible.</div>
+          <div class="terminal-muted">Windows: choco install nmap</div>
+          <div class="terminal-muted">Linux: sudo apt install nmap</div>
+        `;
+        patcherBadge.textContent = 'Error';
+        patcherBadge.className = 'panel-badge badge-critical';
+        setStatus('ERROR', 'critical');
+      }
+    }
+
+    function prependActivityFromScan(data) {
+      const existing = Array.from(document.querySelectorAll('.activity-item')).map((item) => {
+        const meta = item.querySelectorAll('.activity-item-meta span');
+        return {
+          target_label: item.querySelector('.activity-target')?.textContent || 'Unknown Target',
+          timestamp: item.querySelector('.activity-time')?.textContent || 'Recent activity',
+          status: item.querySelector('.activity-risk')?.textContent || 'Recorded',
+          open_port_count: meta[0] ? meta[0].textContent.replace('Open Ports: ', '') : '—',
+          critical_count: meta[1] ? meta[1].textContent.replace('Critical: ', '') : '—',
+          risk_score: meta[2] ? meta[2].textContent.replace('Risk Score: ', '') : '—'
+        };
+      });
+
+      const next = [{
+        target_label: data.target_label || data.target,
+        timestamp: 'Just now',
+        status: data.results?.length ? 'Threat Detected' : 'Secure',
+        open_port_count: data.results?.length || 0,
+        critical_count: (data.results || []).filter((result) => result.risk === 'CRITICAL').length,
+        risk_score: data.risk_score ?? '—'
+      }, ...existing].slice(0, 6);
+
+      renderActivity({ history: next });
+    }
+
+    function updateHeaderStats(data) {
+      const critical = (data.results || []).filter((result) => result.risk === 'CRITICAL').length;
+      const safe = (data.results || []).filter((result) => result.risk !== 'CRITICAL').length;
+      updateChip('critical', critical, critical > 0 ? 'danger' : 'success');
+      updateChip('safe', safe, safe > 0 ? 'success' : '');
+    }
+
+    function updateChip(id, value, cls) {
+      const chip = document.getElementById(`chip-${id}`);
+      const val = document.getElementById(`val-${id}`);
+      if (!chip || !val) return;
+      val.textContent = value;
+      chip.className = `kpi-card stat-chip${cls ? ` ${cls}` : ''}`;
+    }
+
+    function renderScanResults(data) {
+      const panel = document.getElementById('panel-results');
+      const content = document.getElementById('results-content');
+      const meta = document.getElementById('results-meta');
+      const badges = document.getElementById('results-badges');
+
+      panel.classList.add('visible');
+      panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      meta.innerHTML = `
+        <span class="results-target">Target <span>${escHtml(data.target)}</span></span>
+        ${data.os_detected ? `<span class="os-chip">OS Detect: ${escHtml(data.os_detected)}</span>` : ''}
+        ${data.os_inferred && data.os_inferred !== 'Unknown' ? `<span class="os-chip os-chip-soft">Inferred: ${escHtml(data.os_inferred)}</span>` : ''}
+      `;
+
+      badges.innerHTML = `
+        <span class="panel-badge ${data.results?.length ? 'badge-critical' : 'badge-safe'}">
+          ${data.results?.length ? `${data.results.length} Threat${data.results.length > 1 ? 's' : ''}` : 'All Clear'}
+        </span>
+      `;
+
+      if (!data.results?.length) {
+        content.innerHTML = `
+          <div class="secure-banner">
+            <div class="secure-icon">✦</div>
+            <div>
+              <div class="secure-text-main">No vulnerabilities detected</div>
+              <div class="secure-text-sub">All scanned ports are closed or filtered. Risk Score: 100/100</div>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      const score = data.risk_score || 0;
+      const scoreColor = score >= 70 ? 'var(--safe-text)' : score >= 40 ? '#D97706' : 'var(--critical-text)';
+      const aiMap = {};
+      (data.ai_explanations || []).forEach((item) => {
+        aiMap[item.port] = item.explanation;
+      });
+
+      const threatsHtml = (data.results || []).map((result) => {
+        const tone = result.risk.toLowerCase();
+        const ai = aiMap[result.port];
+        return `
+          <div class="threat-row ${tone}">
+            <div>
+              <div class="threat-port">${escHtml(String(result.port))}</div>
+              <div class="threat-risk-chip">${escHtml(result.risk)}</div>
+            </div>
+            <div class="threat-body">
+              <div class="threat-service">${escHtml(result.service)}</div>
+              <div class="threat-analysis">${escHtml(result.analysis)}</div>
+              ${ai ? `<div class="threat-ai"><div class="threat-ai-label">AI Analysis</div>${escHtml(ai)}</div>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      const patchHtml = (data.patch_commands || []).length
+        ? `
+          <div class="section-label">Remediation Commands</div>
+          ${(data.patch_commands || []).map((cmd) => `
+            <div class="patch-cmd" onclick="copyCmd(this, '${cmd.replace(/'/g, "\\'")}')">
+              <div class="patch-cmd-text">${escHtml(cmd)}</div>
+              <button class="patch-copy-btn" type="button">Copy</button>
+            </div>
+          `).join('')}
+        `
+        : '';
+
+      content.innerHTML = `
+        <div class="risk-bar-wrap">
+          <div class="risk-bar-header">
+            <span class="risk-bar-label">Score</span>
+            <span class="risk-score-num" style="color:${scoreColor}">${score}<span class="risk-score-denom">/100</span></span>
+          </div>
+          <div class="risk-bar-track">
+            <div class="risk-bar-fill" style="width:${score}%;background:${scoreColor}"></div>
+          </div>
+        </div>
+
+        <div class="section-label">Threat Matrix</div>
+        <div class="threat-list">${threatsHtml}</div>
+        ${patchHtml}
+      `;
+    }
+
+    function renderPatcher(data) {
+      const terminal = document.getElementById('terminal');
+      const lines = [];
+
+      lines.push(`<div><span class="terminal-accent">[NETGUARD]</span> Scan complete → ${escHtml(data.target)}</div>`);
+      lines.push(`<div class="terminal-muted">OS Detected: ${escHtml(data.os_detected || 'Unknown')}</div>`);
+      lines.push(`<div class="terminal-muted">OS Inferred: ${escHtml(data.os_inferred || 'Unknown')}</div>`);
+      lines.push(`<div class="terminal-muted">Risk Score: ${escHtml(String(data.risk_score))}/100</div>`);
+
+      if (!data.results?.length) {
+        lines.push('<div class="terminal-success">[✓] No critical ports detected — system is secure</div>');
+      } else {
+        lines.push(`<div class="terminal-error">[!] ${escHtml(String(data.results.length))} vulnerable port(s) detected</div>`);
+        lines.push('<div class="terminal-muted">Auto-generated remediation commands:</div>');
+        (data.patch_commands || []).forEach((cmd) => {
+          lines.push(`<div><span class="terminal-accent">$</span> ${escHtml(cmd)}</div>`);
+        });
+
+        if (!(data.patch_commands || []).length) {
+          lines.push('<div class="terminal-warn">Manual review required for this OS type</div>');
+        }
+      }
+
+      if (data.is_host && data.host_script) {
+        lines.push('<div class="terminal-success">[✓] Host lockdown script ready for download</div>');
+      }
+
+      lines.push('<span class="cursor"></span>');
+      terminal.innerHTML = lines.join('');
+    }
+
+    async function downloadLockdownScript() {
+      if (!state.hostIp || !state.lastScan) {
+        toast('Run a scan against your host before downloading a lockdown script', 'error');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/download-script/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            target: state.hostIp,
+            ports: (state.lastScan.results || []).map((result) => result.port)
+          })
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Download failed');
+        }
+
+        const blob = await response.blob();
+        const disposition = response.headers.get('Content-Disposition') || '';
+        const filename = disposition.match(/filename="?([^"]+)"?/)?.[1] || 'netguard_lockdown.bat';
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = filename;
+        anchor.click();
+        URL.revokeObjectURL(url);
+
+        toast(`Lockdown script downloaded: ${filename}`, 'ok');
+      } catch (error) {
+        toast(`Download failed: ${error.message}`, 'error');
+      }
+    }
+
+    async function sendChat() {
+      const input = document.getElementById('ai-input');
+      const msgs = document.getElementById('ai-messages');
+      const prompt = input.value.trim();
+
+      if (!prompt) return;
+      input.value = '';
+
+      msgs.innerHTML += `
+        <div class="msg user">
+          <div class="msg-tag">You</div>
+          ${escHtml(prompt)}
+        </div>
+      `;
+
+      const loadId = `ai-load-${Date.now()}`;
+      msgs.innerHTML += `
+        <div class="msg ai" id="${loadId}">
+          <div class="msg-tag">NETGUARD AI</div>
+          <div class="loader chat-loader">
+            <div class="loader-bars">
+              <div class="loader-bar"></div><div class="loader-bar"></div>
+              <div class="loader-bar"></div><div class="loader-bar"></div>
+            </div>
+            <span>Thinking...</span>
+          </div>
+        </div>
+      `;
+      msgs.scrollTop = msgs.scrollHeight;
+
+      try {
+        const response = await fetch('/api/chat/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt })
+        });
+        const data = await response.json();
+        const reply = data.response || data.error || 'No response';
+
+        document.getElementById(loadId).innerHTML = `
+          <div class="msg-tag">NETGUARD AI</div>
+          ${escHtml(reply)}
+        `;
+      } catch (error) {
+        document.getElementById(loadId).innerHTML = `
+          <div class="msg-tag">NETGUARD AI</div>
+          <span class="terminal-error">Error: ${escHtml(error.message)}</span>
+        `;
+      }
+
+      msgs.scrollTop = msgs.scrollHeight;
+    }
+
+    function quickPrompt(text) {
+      document.getElementById('ai-input').value = text;
+      sendChat();
+    }
+
+    function escHtml(str) {
+      return String(str).replace(/[&<>"']/g, (char) => ({
+        '&': '\u0026amp;',
+        '<': '\u0026lt;',
+        '>': '\u0026gt;',
+        '"': '\u0026quot;',
+        "'": '\u0026#39;'
+      }[char]));
+    }
+
+    function copyCmd(el, cmd) {
+      navigator.clipboard.writeText(cmd).then(() => {
+        const btn = el.querySelector('.patch-copy-btn');
+        if (btn) {
+          btn.textContent = 'Copied';
+          setTimeout(() => {
+            btn.textContent = 'Copy';
+          }, 1500);
+        }
+      });
+    }
+  </script>
 </body>
 </html>
